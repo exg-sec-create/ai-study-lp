@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI勉強会 | 社内セッション</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0b0e1a;
+    --surface: #12172b;
+    --surface-2: #181f38;
+    --line: rgba(235, 239, 255, 0.09);
+    --text: #eceff8;
+    --muted: #98a0bc;
+    --violet: #8b7cff;
+    --teal: #46e3c8;
+    --absent: #ff6b7a;
+    --radius: 18px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Zen Kaku Gothic New", sans-serif;
+    line-height: 1.8;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--violet); color: #fff; }
+
+  .latin { font-family: "Space Grotesk", sans-serif; }
+
+  /* ---------- 背景オーロラ ---------- */
+  .sky {
+    position: fixed; inset: 0; z-index: -2; overflow: hidden;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(139,124,255,.16), transparent 60%),
+      radial-gradient(900px 500px at 10% 110%, rgba(70,227,200,.10), transparent 60%),
+      var(--bg);
+  }
+  .sky::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 0%, transparent 75%);
+  }
+  .aurora {
+    position: absolute; width: 60vw; height: 60vw; border-radius: 50%;
+    filter: blur(90px); opacity: .5; will-change: transform;
+  }
+  .aurora.a { background: radial-gradient(circle, rgba(139,124,255,.5), transparent 65%); top: -25vw; right: -12vw; animation: drift 26s ease-in-out infinite alternate; }
+  .aurora.b { background: radial-gradient(circle, rgba(70,227,200,.32), transparent 65%); top: 22vh; left: -22vw; animation: drift 32s ease-in-out infinite alternate-reverse; }
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to   { transform: translate(6vw, 5vh) scale(1.15); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .aurora { animation: none !important; }
+    .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+  }
+
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- ヘッダー ---------- */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 0;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: .04em; }
+  .brand .dot {
+    width: 12px; height: 12px; border-radius: 3px;
+    background: linear-gradient(135deg, var(--violet), var(--teal));
+    box-shadow: 0 0 14px rgba(139,124,255,.7);
+  }
+  .brand small { color: var(--muted); font-weight: 500; }
+  .admin-link {
+    color: var(--muted); text-decoration: none; font-size: 13px;
+    border: 1px solid var(--line); padding: 8px 16px; border-radius: 999px;
+    transition: color .2s, border-color .2s;
+  }
+  .admin-link:hover, .admin-link:focus-visible { color: var(--text); border-color: var(--violet); }
+
+  /* ---------- ヒーロー ---------- */
+  .hero { padding: 72px 0 56px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 13px; letter-spacing: .22em; color: var(--teal);
+    text-transform: uppercase; margin-bottom: 26px;
+  }
+  .eyebrow::before { content: ""; width: 34px; height: 1px; background: var(--teal); }
+  h1 {
+    font-family: "Shippori Mincho B1", serif;
+    font-weight: 800;
+    font-size: clamp(44px, 8.5vw, 96px);
+    line-height: 1.18;
+    letter-spacing: .02em;
+  }
+  h1 .grad {
+    background: linear-gradient(100deg, var(--violet) 10%, var(--teal) 90%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lead { margin-top: 26px; max-width: 620px; color: var(--muted); font-size: 16px; }
+
+  .meta-row {
+    margin-top: 44px; display: flex; flex-wrap: wrap; gap: 14px;
+  }
+  .meta {
+    border: 1px solid var(--line); background: rgba(18,23,43,.6);
+    backdrop-filter: blur(8px);
+    border-radius: var(--radius); padding: 16px 22px; min-width: 180px;
+  }
+  .meta .k { font-size: 11px; letter-spacing: .2em; color: var(--muted); text-transform: uppercase; }
+  .meta .v { margin-top: 4px; font-size: 19px; font-weight: 700; }
+  .meta .v.latin { font-size: 21px; }
+
+  /* カウントダウン */
+  .countdown { margin-top: 34px; display: flex; gap: 22px; align-items: baseline; }
+  .cd-unit { text-align: center; }
+  .cd-unit .n {
+    font-family: "Space Grotesk", sans-serif; font-size: clamp(30px, 5vw, 46px);
+    font-weight: 700; font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #fff, #aab2d8);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .cd-unit .l { font-size: 11px; letter-spacing: .18em; color: var(--muted); }
+  .cd-note { color: var(--muted); font-size: 13px; }
+
+  /* ---------- セクション共通 ---------- */
+  section { padding: 64px 0; }
+  .sec-head { display: flex; align-items: baseline; gap: 18px; margin-bottom: 34px; }
+  .sec-head h2 {
+    font-family: "Shippori Mincho B1", serif; font-weight: 800;
+    font-size: clamp(26px, 4vw, 36px); letter-spacing: .04em;
+  }
+  .sec-head .en { color: var(--muted); font-size: 12px; letter-spacing: .3em; text-transform: uppercase; }
+
+  /* ---------- アジェンダ ---------- */
+  .agenda { display: grid; gap: 14px; }
+  .slot {
+    display: grid; grid-template-columns: 120px 1fr; gap: 22px;
+    border: 1px solid var(--line); border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(24,31,56,.75), rgba(18,23,43,.55));
+    padding: 22px 26px;
+    transition: border-color .25s, transform .25s;
+  }
+  .slot:hover { border-color: rgba(139,124,255,.45); transform: translateY(-2px); }
+  .slot .time {
+    font-family: "Space Grotesk", sans-serif; font-weight: 700;
+    color: var(--teal); font-size: 15px; padding-top: 3px; white-space: nowrap;
+  }
+  .slot h3 { font-size: 17px; font-weight: 700; }
+  .slot p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+  @media (max-width: 560px) { .slot { grid-template-columns: 1fr; gap: 6px; } }
+
+  /* ---------- 回答フォーム ---------- */
+  .rsvp-card {
+    border: 1px solid var(--line); border-radius: 24px;
+    background:
+      linear-gradient(140deg, rgba(139,124,255,.10), rgba(70,227,200,.06) 60%, transparent),
+      var(--surface);
+    padding: clamp(28px, 5vw, 52px);
+    position: relative; overflow: hidden;
+  }
+  .rsvp-card::before {
+    content: ""; position: absolute; inset: -1px;
+    border-radius: 24px; padding: 1px; pointer-events: none;
+    background: linear-gradient(120deg, rgba(139,124,255,.55), transparent 40%, transparent 60%, rgba(70,227,200,.45));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .rsvp-card p.note { color: var(--muted); font-size: 14px; max-width: 560px; }
+  .rsvp-actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+
+  .btn {
+    appearance: none; border: none; cursor: pointer;
+    font-family: inherit; font-size: 15px; font-weight: 700;
+    padding: 15px 34px; border-radius: 999px;
+    transition: transform .18s, box-shadow .18s, opacity .18s;
+  }
+  .btn:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+  .btn:active { transform: scale(.97); }
+  .btn-google {
+    background: #fff; color: #1a1d29; display: inline-flex; align-items: center; gap: 10px;
+  }
+  .btn-google:hover { box-shadow: 0 8px 30px rgba(255,255,255,.18); }
+  .btn-absent {
+    background: linear-gradient(120deg, var(--absent), #ff9a6b);
+    color: #fff; letter-spacing: .05em;
+    box-shadow: 0 8px 28px rgba(255,107,122,.28);
+  }
+  .btn-absent:hover { box-shadow: 0 10px 36px rgba(255,107,122,.45); transform: translateY(-1px); }
+  .btn-ghost {
+    background: transparent; color: var(--muted); border: 1px solid var(--line);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+  .btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+  .user-chip {
+    display: inline-flex; align-items: center; gap: 10px;
+    border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px 8px 8px;
+    font-size: 13px; color: var(--muted); background: rgba(255,255,255,.03);
+  }
+  .user-chip img { width: 28px; height: 28px; border-radius: 50%; }
+
+  .status {
+    margin-top: 22px; padding: 16px 20px; border-radius: 14px;
+    font-size: 14px; display: none;
+  }
+  .status.show { display: block; }
+  .status.ok { background: rgba(70,227,200,.1); border: 1px solid rgba(70,227,200,.4); color: var(--teal); }
+  .status.absent { background: rgba(255,107,122,.1); border: 1px solid rgba(255,107,122,.45); color: var(--absent); }
+  .status.err { background: rgba(255,107,122,.08); border: 1px solid rgba(255,107,122,.3); color: #ffb3bb; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 34px 0 44px; color: var(--muted); font-size: 13px;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<div class="sky" aria-hidden="true">
+  <div class="aurora a"></div>
+  <div class="aurora b"></div>
+</div>
+
+<div class="wrap">
+  <header>
+    <div class="brand latin"><span class="dot"></span>AI STUDY&nbsp;<small>/ internal session</small></div>
+    <a class="admin-link" href="./admin.html">管理者ページ</a>
+  </header>
+
+  <!-- ヒーロー -->
+  <div class="hero">
+    <div class="eyebrow reveal latin" id="heroEyebrow">Internal Session</div>
+    <h1 class="reveal" id="eventTitle">社内<span class="grad">AI勉強会</span></h1>
+    <p class="lead reveal" id="eventDescription">読み込み中…</p>
+
+    <div class="meta-row reveal">
+      <div class="meta">
+        <div class="k">Date</div>
+        <div class="v latin" id="eventDate">—</div>
+      </div>
+      <div class="meta">
+        <div class="k">Time</div>
+        <div class="v latin" id="eventTime">—</div>
+      </div>
+      <div class="meta">
+        <div class="k">Place</div>
+        <div class="v" id="eventPlace">—</div>
+      </div>
+    </div>
+
+    <div class="countdown reveal" id="countdown" hidden>
+      <div class="cd-unit"><div class="n" id="cdD">0</div><div class="l">DAYS</div></div>
+      <div class="cd-unit"><div class="n" id="cdH">0</div><div class="l">HOURS</div></div>
+      <div class="cd-unit"><div class="n" id="cdM">0</div><div class="l">MIN</div></div>
+      <div class="cd-unit"><div class="n" id="cdS">0</div><div class="l">SEC</div></div>
+      <div class="cd-note">開始まで</div>
+    </div>
+  </div>
+
+  <!-- アジェンダ -->
+  <section>
+    <div class="sec-head reveal">
+      <h2>当日の内容</h2><span class="en latin">Agenda</span>
+    </div>
+    <div class="agenda" id="agendaList">
+      <div class="slot"><div class="time">--:--</div><div><h3>読み込み中…</h3></div></div>
+    </div>
+  </section>
+
+  <!-- 出欠回答 -->
+  <section id="rsvp">
+    <div class="sec-head reveal">
+      <h2>出欠のご回答</h2><span class="en latin">RSVP</span>
+    </div>
+    <div class="rsvp-card reveal">
+      <p class="note">
+        参加される方の回答は不要です。<strong style="color:var(--text)">ご欠席の場合のみ</strong>、
+        Googleアカウント(社内Gmail)でログインのうえ、下のボタンを押してください。
+        回答者のメールアドレスが自動で記録されます。
+      </p>
+
+      <!-- 未ログイン -->
+      <div class="rsvp-actions" id="viewSignedOut">
+        <button class="btn btn-google" id="btnLogin">
+          <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.7 2.4 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.3 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6C44.2 38 46.5 31.9 46.5 24.5z"/><path fill="#FBBC05" d="M10.4 28.7A14.5 14.5 0 0 1 9.6 24c0-1.6.3-3.2.8-4.7l-7.8-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.2 0 11.7-2 15.6-5.6l-7.7-6c-2.1 1.4-4.8 2.3-7.9 2.3-6.3 0-11.7-3.8-13.6-9.1l-7.8 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+          Googleでログインして回答
+        </button>
+      </div>
+
+      <!-- ログイン済 -->
+      <div class="rsvp-actions" id="viewSignedIn" hidden>
+        <span class="user-chip"><img id="userPhoto" alt="" /><span id="userEmail"></span></span>
+        <button class="btn btn-absent" id="btnAbsent">欠席致します。</button>
+        <button class="btn btn-ghost" id="btnCancel" hidden>欠席を取り消す</button>
+        <button class="btn btn-ghost" id="btnLogout">ログアウト</button>
+      </div>
+
+      <div class="status" id="statusBox" role="status"></div>
+    </div>
+  </section>
+
+  <footer>
+    <div>© 2026 AI Study — Internal use only</div>
+    <div class="latin">Powered by Firebase</div>
+  </footer>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const provider = new GoogleAuthProvider();
+// 社内ドメインに絞る場合はコメントを外してドメインを指定
+// provider.setCustomParameters({ hd: "example.co.jp" });
+
+const $ = (id) => document.getElementById(id);
+const statusBox = $("statusBox");
+
+function showStatus(type, msg) {
+  statusBox.className = "status show " + type;
+  statusBox.textContent = msg;
+}
+
+/* ---------- イベント情報の読込 ---------- */
+async function loadEvent() {
+  try {
+    const snap = await getDoc(doc(db, "aiStudy_settings", "event"));
+    const d = snap.exists() ? snap.data() : {};
+    $("eventTitle").innerHTML = d.titleHtml || '社内<span class="grad">AI勉強会</span>';
+    $("eventDescription").textContent = d.description || "生成AIの最新動向と社内活用事例を1時間で共有するセッションです。";
+    $("eventDate").textContent  = d.dateLabel || "2026.7.17 FRI";
+    $("eventTime").textContent  = d.timeLabel || "18:00 – 19:00";
+    $("eventPlace").textContent = d.place || "本社 大会議室 / オンライン";
+    if (d.eyebrow) $("heroEyebrow").textContent = d.eyebrow;
+
+    const agenda = Array.isArray(d.agenda) && d.agenda.length ? d.agenda : [
+      { time: "18:00", title: "オープニング", desc: "本日の趣旨とゴール共有" },
+      { time: "18:10", title: "生成AIの最新動向", desc: "主要モデルのアップデートと業界トレンド" },
+      { time: "18:30", title: "社内活用事例の紹介", desc: "業務での実践例とデモ" },
+      { time: "18:50", title: "Q&A・クロージング", desc: "質疑応答と次回のご案内" },
+    ];
+    $("agendaList").innerHTML = agenda.map(a => `
+      <div class="slot reveal in">
+        <div class="time">${esc(a.time)}</div>
+        <div><h3>${esc(a.title)}</h3><p>${esc(a.desc || "")}</p></div>
+      </div>`).join("");
+
+    // カウントダウン(startAt: ISO文字列 例 "2026-07-17T18:00:00+09:00")
+    if (d.startAt) startCountdown(new Date(d.startAt));
+    else startCountdown(new Date("2026-07-17T18:00:00+09:00"));
+  } catch (e) {
+    console.error(e);
+    $("eventDescription").textContent = "イベント情報の取得に失敗しました。管理者にお問い合わせください。";
+  }
+}
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function startCountdown(target) {
+  const el = $("countdown");
+  const tick = () => {
+    const diff = target - new Date();
+    if (diff <= 0) { el.hidden = true; return; }
+    el.hidden = false;
+    $("cdD").textContent = Math.floor(diff / 864e5);
+    $("cdH").textContent = String(Math.floor(diff / 36e5) % 24).padStart(2, "0");
+    $("cdM").textContent = String(Math.floor(diff / 6e4) % 60).padStart(2, "0");
+    $("cdS").textContent = String(Math.floor(diff / 1e3) % 60).padStart(2, "0");
+  };
+  tick(); setInterval(tick, 1000);
+}
+
+/* ---------- 認証と回答 ---------- */
+let currentUser = null;
+
+onAuthStateChanged(auth, async (user) => {
+  currentUser = user;
+  $("viewSignedOut").hidden = !!user;
+  $("viewSignedIn").hidden  = !user;
+  statusBox.className = "status";
+  if (!user) return;
+  $("userEmail").textContent = user.email;
+  $("userPhoto").src = user.photoURL || "";
+  await refreshMyResponse();
+});
+
+async function refreshMyResponse() {
+  try {
+    const snap = await getDoc(doc(db, "aiStudy_responses", currentUser.uid));
+    const absent = snap.exists() && snap.data().status === "absent";
+    $("btnAbsent").hidden = absent;
+    $("btnCancel").hidden = !absent;
+    if (absent) showStatus("absent", "「欠席」として回答済みです。ご都合が変わった場合は取り消しできます。");
+  } catch (e) { console.error(e); }
+}
+
+$("btnLogin").addEventListener("click", async () => {
+  try { await signInWithPopup(auth, provider); }
+  catch (e) {
+    if (e.code !== "auth/popup-closed-by-user") showStatus("err", "ログインに失敗しました: " + e.message);
+  }
+});
+
+$("btnLogout").addEventListener("click", () => signOut(auth));
+
+$("btnAbsent").addEventListener("click", async () => {
+  if (!currentUser) return;
+  $("btnAbsent").disabled = true;
+  try {
+    await setDoc(doc(db, "aiStudy_responses", currentUser.uid), {
+      email: currentUser.email,
+      name: currentUser.displayName || "",
+      status: "absent",
+      respondedAt: serverTimestamp(),
+    });
+    showStatus("absent", "回答を受け付けました:「欠席致します。」— ご回答ありがとうございました。");
+  } catch (e) {
+    console.error(e);
+    showStatus("err", e.code === "permission-denied"
+      ? "このアカウントには回答権がありません。管理者にメンバー登録を依頼してください。"
+      : "送信に失敗しました。時間をおいて再度お試しください。");
+  } finally {
+    $("btnAbsent").disabled = false;
+    await refreshMyResponse();
+  }
+});
+
+$("btnCancel").addEventListener("click", async () => {
+  if (!currentUser) return;
+  try {
+    await deleteDoc(doc(db, "aiStudy_responses", currentUser.uid));
+    showStatus("ok", "欠席回答を取り消しました。当日のご参加をお待ちしています。");
+  } catch (e) {
+    showStatus("err", "取り消しに失敗しました: " + e.message);
+  }
+  await refreshMyResponse();
+});
+
+/* ---------- リビール ---------- */
+const io = new IntersectionObserver((es) => {
+  es.forEach(e => e.isIntersecting && e.target.classList.add("in"));
+}, { threshold: 0.12 });
+document.querySelectorAll(".reveal").forEach(el => io.observe(el));
+
+loadEvent();
+</script>
+</body>
+</html>

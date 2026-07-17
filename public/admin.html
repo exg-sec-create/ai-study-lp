@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>管理者ページ | AI勉強会</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0b0e1a; --surface: #12172b; --surface-2: #181f38;
+    --line: rgba(235,239,255,.09); --text: #eceff8; --muted: #98a0bc;
+    --violet: #8b7cff; --teal: #46e3c8; --absent: #ff6b7a; --radius: 16px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background: var(--bg); color: var(--text); font-family: "Zen Kaku Gothic New", sans-serif; line-height: 1.7; }
+  .latin { font-family: "Space Grotesk", sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px 80px; }
+
+  header { display:flex; align-items:center; justify-content:space-between; padding: 22px 0; }
+  .brand { display:flex; align-items:center; gap:12px; font-weight:700; }
+  .brand .dot { width:12px; height:12px; border-radius:3px; background: linear-gradient(135deg, var(--violet), var(--teal)); }
+  .back { color: var(--muted); text-decoration:none; font-size:13px; border:1px solid var(--line); padding:8px 16px; border-radius:999px; }
+  .back:hover { color: var(--text); border-color: var(--violet); }
+
+  h1 { font-family:"Shippori Mincho B1", serif; font-size: clamp(28px,5vw,42px); margin: 24px 0 6px; }
+  .sub { color: var(--muted); font-size:14px; margin-bottom: 34px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 28px; margin-bottom: 26px;
+  }
+  .card h2 { font-size: 17px; margin-bottom: 4px; display:flex; align-items:center; gap:10px; }
+  .card h2 .tag { font-size:11px; letter-spacing:.2em; color:var(--teal); text-transform:uppercase; font-family:"Space Grotesk"; }
+  .card .desc { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+
+  label { display:block; font-size: 12px; color: var(--muted); letter-spacing:.08em; margin: 14px 0 6px; }
+  input[type=text], input[type=datetime-local], textarea {
+    width: 100%; background: var(--bg); color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px;
+    font-family: inherit; font-size: 14px;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--violet); }
+  textarea { resize: vertical; min-height: 80px; }
+  .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap: 0 18px; }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .btn {
+    appearance:none; border:none; cursor:pointer; font-family:inherit;
+    font-size:14px; font-weight:700; padding: 12px 26px; border-radius: 999px;
+    transition: opacity .2s, transform .15s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn[disabled] { opacity:.5; cursor:not-allowed; }
+  .btn-primary { background: linear-gradient(120deg, var(--violet), var(--teal)); color:#0b0e1a; }
+  .btn-ghost { background: transparent; border:1px solid var(--line); color: var(--muted); }
+  .btn-ghost:hover { color: var(--text); }
+  .btn-google { background:#fff; color:#1a1d29; }
+  .btn-mini {
+    background: transparent; border:1px solid var(--line); color: var(--muted);
+    font-size:12px; padding: 6px 14px; border-radius: 999px; cursor:pointer;
+  }
+  .btn-mini:hover { color: var(--absent); border-color: var(--absent); }
+
+  .agenda-item {
+    display:grid; grid-template-columns: 110px 1fr 1fr auto; gap: 10px;
+    margin-bottom: 10px; align-items:center;
+  }
+  @media (max-width: 720px) { .agenda-item { grid-template-columns: 1fr; } }
+
+  table { width:100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align:left; padding: 12px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-size:11px; letter-spacing:.15em; text-transform:uppercase; font-weight:500; }
+  .count-pill {
+    display:inline-block; background: rgba(255,107,122,.12); color: var(--absent);
+    border:1px solid rgba(255,107,122,.4); border-radius:999px;
+    font-size:12px; padding: 3px 14px; margin-left: 8px; font-weight:700;
+  }
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--surface-2); border: 1px solid var(--teal); color: var(--teal);
+    padding: 13px 26px; border-radius: 999px; font-size: 14px;
+    opacity: 0; pointer-events:none; transition: opacity .3s, transform .3s; z-index: 50;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.err { border-color: var(--absent); color: var(--absent); }
+
+  .gate { text-align:center; padding: 90px 20px; }
+  .gate p { color: var(--muted); margin: 14px 0 26px; }
+  .user-chip { display:inline-flex; align-items:center; gap:10px; border:1px solid var(--line);
+    border-radius:999px; padding: 6px 16px 6px 6px; font-size:13px; color:var(--muted); }
+  .user-chip img { width:26px; height:26px; border-radius:50%; }
+  .topbar-actions { display:flex; gap: 12px; align-items:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand latin"><span class="dot"></span>AI STUDY <span style="color:var(--muted);font-weight:500">/ admin</span></div>
+    <div class="topbar-actions">
+      <span class="user-chip" id="userChip" hidden><img id="userPhoto" alt=""><span id="userEmail"></span></span>
+      <a class="back" href="./index.html">LPに戻る</a>
+    </div>
+  </header>
+
+  <!-- 認証ゲート -->
+  <div class="gate" id="gate">
+    <h1>管理者ページ</h1>
+    <p id="gateMsg">管理権限のあるGoogleアカウントでログインしてください。</p>
+    <button class="btn btn-google" id="btnLogin">Googleでログイン</button>
+    <button class="btn btn-ghost" id="btnGateLogout" hidden>別のアカウントでログイン</button>
+  </div>
+
+  <!-- 管理画面本体 -->
+  <div id="panel" hidden>
+    <h1>管理者ページ</h1>
+    <p class="sub">イベント情報の編集・回答権/管理権限の管理・欠席者の確認ができます。変更は保存ボタンを押した時点でLPに即時反映されます。</p>
+
+    <!-- イベント編集 -->
+    <div class="card">
+      <h2>イベント情報 <span class="tag">Event</span></h2>
+      <p class="desc">LPのヒーローとカウントダウンに表示される内容です。</p>
+      <div class="grid2">
+        <div><label>タイトル(HTML可 / &lt;span class="grad"&gt;でグラデ文字)</label>
+          <input type="text" id="fTitle" placeholder='社内<span class="grad">AI勉強会</span>'></div>
+        <div><label>アイキャッチ(英字ラベル)</label>
+          <input type="text" id="fEyebrow" placeholder="Internal Session"></div>
+        <div><label>日付表示</label><input type="text" id="fDate" placeholder="2026.7.17 FRI"></div>
+        <div><label>時間表示</label><input type="text" id="fTime" placeholder="18:00 – 19:00"></div>
+        <div><label>場所</label><input type="text" id="fPlace" placeholder="本社 大会議室 / オンライン"></div>
+        <div><label>開始日時(カウントダウン用)</label><input type="datetime-local" id="fStartAt"></div>
+      </div>
+      <label>概要文</label>
+      <textarea id="fDesc" placeholder="セッションの概要を入力"></textarea>
+
+      <label style="margin-top:24px">アジェンダ</label>
+      <div id="agendaEditor"></div>
+      <button class="btn btn-ghost" id="btnAddSlot" style="margin-top:6px">＋ 枠を追加</button>
+
+      <div style="margin-top:26px"><button class="btn btn-primary" id="btnSaveEvent">イベント情報を保存</button></div>
+    </div>
+
+    <!-- 権限管理 -->
+    <div class="card">
+      <h2>メンバー・権限管理 <span class="tag">Access</span></h2>
+      <p class="desc">メールアドレスを1行に1件ずつ入力してください。回答権メンバーに含まれないアカウントは欠席回答できません。管理者は自動的に回答権も持ちます。</p>
+      <div class="grid2">
+        <div>
+          <label>回答権があるメンバー</label>
+          <textarea id="fMembers" rows="8" placeholder="taro@example.co.jp&#10;hanako@example.co.jp"></textarea>
+        </div>
+        <div>
+          <label>管理権限があるメンバー</label>
+          <textarea id="fAdmins" rows="8" placeholder="admin@example.co.jp"></textarea>
+        </div>
+      </div>
+      <p class="desc" style="margin-top:10px">⚠ 自分自身を管理者一覧から削除すると、このページにアクセスできなくなります。</p>
+      <button class="btn btn-primary" id="btnSaveAccess">権限設定を保存</button>
+    </div>
+
+    <!-- 欠席者一覧 -->
+    <div class="card">
+      <h2>欠席者一覧 <span class="tag">Responses</span><span class="count-pill" id="absentCount">0名</span></h2>
+      <p class="desc">「欠席致します。」と回答したメンバーの一覧です(リアルタイム更新)。</p>
+      <table>
+        <thead><tr><th>#</th><th>名前</th><th>メールアドレス</th><th>回答日時</th><th></th></tr></thead>
+        <tbody id="respBody"><tr><td colspan="5" style="color:var(--muted)">読み込み中…</td></tr></tbody>
+      </table>
+      <div style="margin-top:16px"><button class="btn btn-ghost" id="btnCsv">CSVをダウンロード</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, setDoc, deleteDoc, collection, onSnapshot, query, orderBy
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let toastTimer;
+function toast(msg, isErr=false) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (isErr ? " err" : "");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = "toast", 3000);
+}
+
+/* ---------- 認証 / 管理者判定 ---------- */
+let unsubResponses = null;
+
+onAuthStateChanged(auth, async (user) => {
+  $("userChip").hidden = !user;
+  if (user) {
+    $("userEmail").textContent = user.email;
+    $("userPhoto").src = user.photoURL || "";
+  }
+  if (!user) {
+    $("gate").hidden = false; $("panel").hidden = true;
+    $("btnLogin").hidden = false; $("btnGateLogout").hidden = true;
+    $("gateMsg").textContent = "管理権限のあるGoogleアカウントでログインしてください。";
+    if (unsubResponses) { unsubResponses(); unsubResponses = null; }
+    return;
+  }
+  // 管理者判定: settings/access は管理者のみ読取可能なので、読めれば管理者
+  try {
+    const accessSnap = await getDoc(doc(db, "aiStudy_settings", "access"));
+    const admins = accessSnap.exists() ? (accessSnap.data().admins || []) : [];
+    if (!admins.map(a => a.toLowerCase()).includes(user.email.toLowerCase())) throw new Error("not-admin");
+    enterPanel(accessSnap.data());
+  } catch (e) {
+    $("gate").hidden = false; $("panel").hidden = true;
+    $("btnLogin").hidden = true; $("btnGateLogout").hidden = false;
+    $("gateMsg").textContent = `${user.email} には管理権限がありません。`;
+  }
+});
+
+$("btnLogin").addEventListener("click", () => signInWithPopup(auth, provider).catch(()=>{}));
+$("btnGateLogout").addEventListener("click", () => signOut(auth));
+
+/* ---------- 管理画面 ---------- */
+async function enterPanel(access) {
+  $("gate").hidden = true; $("panel").hidden = false;
+
+  // 権限
+  $("fMembers").value = (access.members || []).join("\n");
+  $("fAdmins").value  = (access.admins || []).join("\n");
+
+  // イベント
+  const evSnap = await getDoc(doc(db, "aiStudy_settings", "event"));
+  const d = evSnap.exists() ? evSnap.data() : {};
+  $("fTitle").value   = d.titleHtml || '社内<span class="grad">AI勉強会</span>';
+  $("fEyebrow").value = d.eyebrow || "Internal Session";
+  $("fDate").value    = d.dateLabel || "2026.7.17 FRI";
+  $("fTime").value    = d.timeLabel || "18:00 – 19:00";
+  $("fPlace").value   = d.place || "本社 大会議室 / オンライン";
+  $("fDesc").value    = d.description || "";
+  if (d.startAt) $("fStartAt").value = d.startAt.slice(0, 16);
+  else $("fStartAt").value = "2026-07-17T18:00";
+  renderAgendaEditor(Array.isArray(d.agenda) ? d.agenda : []);
+
+  watchResponses();
+}
+
+/* アジェンダ編集 */
+function renderAgendaEditor(items) {
+  const box = $("agendaEditor");
+  box.innerHTML = "";
+  if (!items.length) items = [{ time:"18:00", title:"", desc:"" }];
+  items.forEach(it => box.appendChild(slotRow(it)));
+}
+function slotRow(it = {}) {
+  const row = document.createElement("div");
+  row.className = "agenda-item";
+  row.innerHTML = `
+    <input type="text" class="s-time"  placeholder="18:00" value="${esc(it.time)}">
+    <input type="text" class="s-title" placeholder="タイトル" value="${esc(it.title)}">
+    <input type="text" class="s-desc"  placeholder="説明" value="${esc(it.desc)}">
+    <button class="btn-mini" type="button">削除</button>`;
+  row.querySelector(".btn-mini").addEventListener("click", () => row.remove());
+  return row;
+}
+$("btnAddSlot").addEventListener("click", () => $("agendaEditor").appendChild(slotRow()));
+
+/* イベント保存 */
+$("btnSaveEvent").addEventListener("click", async () => {
+  const agenda = [...document.querySelectorAll(".agenda-item")].map(r => ({
+    time:  r.querySelector(".s-time").value.trim(),
+    title: r.querySelector(".s-title").value.trim(),
+    desc:  r.querySelector(".s-desc").value.trim(),
+  })).filter(a => a.title);
+  const startLocal = $("fStartAt").value; // "YYYY-MM-DDTHH:mm"
+  try {
+    $("btnSaveEvent").disabled = true;
+    await setDoc(doc(db, "aiStudy_settings", "event"), {
+      titleHtml: $("fTitle").value.trim(),
+      eyebrow:   $("fEyebrow").value.trim(),
+      dateLabel: $("fDate").value.trim(),
+      timeLabel: $("fTime").value.trim(),
+      place:     $("fPlace").value.trim(),
+      description: $("fDesc").value.trim(),
+      startAt: startLocal ? startLocal + ":00+09:00" : null,
+      agenda,
+    });
+    toast("イベント情報を保存しました");
+  } catch (e) { toast("保存に失敗しました: " + e.message, true); }
+  finally { $("btnSaveEvent").disabled = false; }
+});
+
+/* 権限保存 */
+const parseEmails = (v) => [...new Set(v.split(/\r?\n|,|\s/).map(s => s.trim().toLowerCase()).filter(s => s.includes("@")))];
+$("btnSaveAccess").addEventListener("click", async () => {
+  const admins  = parseEmails($("fAdmins").value);
+  const members = parseEmails($("fMembers").value);
+  const me = auth.currentUser?.email?.toLowerCase();
+  if (me && !admins.includes(me) && !confirm("自分自身が管理者一覧に含まれていません。保存するとこのページにアクセスできなくなります。続行しますか?")) return;
+  try {
+    $("btnSaveAccess").disabled = true;
+    await setDoc(doc(db, "aiStudy_settings", "access"), { admins, members });
+    $("fAdmins").value = admins.join("\n");
+    $("fMembers").value = members.join("\n");
+    toast("権限設定を保存しました");
+  } catch (e) { toast("保存に失敗しました: " + e.message, true); }
+  finally { $("btnSaveAccess").disabled = false; }
+});
+
+/* 欠席者一覧(リアルタイム) */
+let latestRows = [];
+function watchResponses() {
+  if (unsubResponses) unsubResponses();
+  const q = query(collection(db, "aiStudy_responses"), orderBy("respondedAt", "desc"));
+  unsubResponses = onSnapshot(q, (snap) => {
+    latestRows = [];
+    snap.forEach(docu => {
+      const d = docu.data();
+      if (d.status === "absent") latestRows.push({ id: docu.id, ...d });
+    });
+    $("absentCount").textContent = latestRows.length + "名";
+    const body = $("respBody");
+    if (!latestRows.length) {
+      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted)">欠席の回答はまだありません 🎉</td></tr>`;
+      return;
+    }
+    body.innerHTML = latestRows.map((r, i) => {
+      const dt = r.respondedAt?.toDate ? r.respondedAt.toDate().toLocaleString("ja-JP") : "—";
+      return `<tr>
+        <td class="latin">${i + 1}</td>
+        <td>${esc(r.name)}</td>
+        <td class="latin">${esc(r.email)}</td>
+        <td>${esc(dt)}</td>
+        <td><button class="btn-mini" data-del="${esc(r.id)}">削除</button></td>
+      </tr>`;
+    }).join("");
+    body.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
+      if (!confirm("この回答を削除しますか?")) return;
+      try { await deleteDoc(doc(db, "aiStudy_responses", b.dataset.del)); toast("回答を削除しました"); }
+      catch (e) { toast("削除に失敗しました: " + e.message, true); }
+    }));
+  }, (e) => {
+    $("respBody").innerHTML = `<tr><td colspan="5" style="color:var(--absent)">読込エラー: ${esc(e.message)}</td></tr>`;
+  });
+}
+
+/* CSV */
+$("btnCsv").addEventListener("click", () => {
+  const header = "名前,メールアドレス,ステータス,回答日時\n";
+  const lines = latestRows.map(r => {
+    const dt = r.respondedAt?.toDate ? r.respondedAt.toDate().toLocaleString("ja-JP") : "";
+    return [r.name, r.email, "欠席", dt].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",");
+  }).join("\n");
+  const blob = new Blob(["\uFEFF" + header + lines], { type: "text/csv" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "absent_list.csv";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+</script>
+</body>
+</html>

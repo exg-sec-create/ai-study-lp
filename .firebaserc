@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "exceed-secretary-system"
+  },
+  "targets": {
+    "exceed-secretary-system": {
+      "hosting": {
+        "ai-study": [
+          "exceed-ai-study"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

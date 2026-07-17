@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ============================================================
+    // exceed-secretary-system 統合ルール(2026-07 更新)
+    //
+    // ・旧テストモードルール(2026/5/6 期限)は既に失効していたため削除。
+    // ・Admin SDK(サーバー側)からのアクセスはルールの影響を受けません。
+    // ・もし秘書システムがブラウザ等のクライアントから直接Firestoreへ
+    //   アクセスしている場合は、そのコレクション用のmatchブロックを
+    //   別途追加してください(最下部の全拒否より上に記述)。
+    // ============================================================
+
+    // ---------- AI勉強会: ヘルパー ----------
+    function aiStudySignedIn() {
+      return request.auth != null;
+    }
+    function aiStudyAccess() {
+      return get(/databases/$(database)/documents/aiStudy_settings/access).data;
+    }
+    function aiStudyEmail() {
+      return request.auth.token.email.lower();
+    }
+    function aiStudyIsAdmin() {
+      return aiStudySignedIn() && aiStudyEmail() in aiStudyAccess().admins;
+    }
+    function aiStudyIsMember() {
+      // 管理者は自動的に回答権も持つ
+      return aiStudySignedIn()
+        && (aiStudyEmail() in aiStudyAccess().members || aiStudyIsAdmin());
+    }
+
+    // ---------- AI勉強会: イベント情報 ----------
+    // 閲覧: 誰でも(LP表示用) / 編集: 管理者のみ
+    match /aiStudy_settings/event {
+      allow read: if true;
+      allow write: if aiStudyIsAdmin();
+    }
+
+    // ---------- AI勉強会: 権限リスト ----------
+    // 読み書きとも管理者のみ(=読めるか否かで管理者判定)
+    match /aiStudy_settings/access {
+      allow read, write: if aiStudyIsAdmin();
+    }
+
+    // ---------- AI勉強会: 出欠回答 ----------
+    match /aiStudy_responses/{uid} {
+      allow read: if aiStudySignedIn()
+        && (request.auth.uid == uid || aiStudyIsAdmin());
+      allow create, update: if aiStudyIsMember()
+        && request.auth.uid == uid
+        && request.resource.data.email.lower() == aiStudyEmail()
+        && request.resource.data.status == "absent";
+      allow delete: if aiStudySignedIn()
+        && (request.auth.uid == uid || aiStudyIsAdmin());
+    }
+
+    // ---------- 上記以外は全拒否 ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
