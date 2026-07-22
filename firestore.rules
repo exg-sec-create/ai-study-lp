@@ -2,6 +2,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+// --- AI活用事例（誰でも閲覧・投稿可、更新はいいね数のみ） ---
+    match /aiStudy_cases/{caseId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['email','tool','title','body'])
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() > 0
+                    && request.resource.data.title.size() < 200;
+      // 更新は likesCount の ±1 のみ許可（他フィールドの改ざん防止）
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount'])
+                    && request.resource.data.likesCount is int
+                    && request.resource.data.likesCount >= 0
+                    && (request.resource.data.likesCount == resource.data.likesCount + 1
+                     || request.resource.data.likesCount == resource.data.likesCount - 1);
+      allow delete: if false;
+    }
+ 
+    // --- 社員マスタ（Gmail突合の参照元・読み取りのみ） ---
+    match /aiStudy_employees/{email} {
+      allow read: if true;
+      allow write: if false;   // 登録・更新はサーバー鍵（管理スクリプト）からのみ
+    }
+ 
+    // --- いいね記録（1人1事例1回・重複防止はドキュメントIDで担保） ---
+    match /aiStudy_likes/{likeId} {
+      allow read: if true;
+      allow create: if true;
+      allow delete: if true;
+      allow update: if false;
+    }
+
     // ============================================================
     // exceed-secretary-system 統合ルール(2026-07 更新)
     //
