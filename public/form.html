@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI活用事例の投稿 | EXCEED GROUP</title>
+<style>
+  :root {
+    --ink:#0E1330; --ink2:#1A2150; --violet:#6C5CE7; --violet2:#8B7BF0;
+    --teal:#1FB6A6; --gold:#E0B341; --coral:#E8654F;
+    --paper:#F7F8FC; --card:#FFFFFF; --line:rgba(20,28,70,0.10);
+    --t1:#12173A; --t2:#5A6288; --t3:#9AA0C0;
+    --r:14px; --rs:10px;
+    --sans:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;
+    --serif:'Hiragino Mincho ProN','Yu Mincho',serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:var(--sans); background:var(--paper); color:var(--t1); font-size:14px; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:680px; margin:0 auto; padding:0 20px 60px; }
+  .hero { background:linear-gradient(135deg,#0E1330 0%,#1A2150 55%,#2A2470 100%);
+    margin:0 -20px 26px; padding:34px 40px 30px; position:relative; overflow:hidden; }
+  .hero::before { content:''; position:absolute; top:-80px; right:-40px; width:280px; height:280px;
+    background:radial-gradient(circle,rgba(108,92,231,.55),transparent 70%); }
+  .hero-in { position:relative; z-index:1; max-width:640px; margin:0 auto; }
+  .eyebrow { font-size:11px; letter-spacing:.28em; color:var(--violet2); font-weight:700; margin-bottom:10px; }
+  .hero h1 { font-family:var(--serif); font-size:28px; font-weight:600; color:#fff; letter-spacing:.02em; line-height:1.3; }
+  .hero p { color:#B8BEE8; font-size:13px; margin-top:8px; line-height:1.6; }
+
+  /* login gate */
+  .gate { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:32px 28px; text-align:center; }
+  .gate h2 { font-size:16px; font-weight:700; margin-bottom:8px; }
+  .gate p { font-size:13px; color:var(--t2); line-height:1.7; margin-bottom:20px; }
+  .g-btn { display:inline-flex; align-items:center; gap:10px; padding:12px 24px; border-radius:var(--rs);
+    background:#fff; border:1px solid var(--line); font-size:14px; font-weight:700; color:var(--t1); cursor:pointer;
+    box-shadow:0 1px 3px rgba(0,0,0,.06); font-family:var(--sans); }
+  .g-btn:hover { background:#F7F8FC; }
+  .g-btn svg { width:18px; height:18px; }
+
+  .who { background:#EAE7FC; border-radius:var(--rs); padding:11px 15px; font-size:13px; color:#4A3D9E;
+    margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+  .who b { font-weight:700; }
+  .who .out { margin-left:auto; font-size:12px; color:var(--violet); cursor:pointer; text-decoration:underline; }
+
+  .field { margin-bottom:18px; }
+  .field label { display:block; font-size:13px; font-weight:700; margin-bottom:7px; }
+  .req { color:var(--coral); margin-left:3px; font-size:12px; }
+  .hint { font-size:11px; color:var(--t3); font-weight:400; margin-left:6px; }
+  .field input[type=text], .field textarea, .field select {
+    width:100%; padding:11px 13px; font-size:14px; border:1px solid var(--line); border-radius:var(--rs);
+    background:#fff; color:var(--t1); font-family:var(--sans); outline:none; }
+  .field input:focus, .field textarea:focus, .field select:focus { border-color:var(--violet); box-shadow:0 0 0 3px rgba(108,92,231,.1); }
+  .field textarea { resize:vertical; min-height:90px; line-height:1.6; }
+
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .time-box { background:#F0F2FA; border-radius:var(--rs); padding:16px; margin-bottom:18px; }
+  .time-box .tt { font-size:13px; font-weight:700; margin-bottom:4px; }
+  .time-box .td { font-size:11px; color:var(--t2); margin-bottom:13px; line-height:1.5; }
+  .time-inputs { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:end; }
+  .time-inputs .arrow { font-size:20px; color:var(--violet); padding-bottom:8px; }
+  .mini-label { font-size:11px; color:var(--t2); margin-bottom:5px; display:block; }
+  .preview { margin-top:12px; font-size:13px; font-weight:700; color:var(--teal); text-align:center; min-height:18px; }
+
+  .stars { display:flex; gap:8px; }
+  .star { font-size:26px; cursor:pointer; color:#D5D8E8; user-select:none; }
+  .star.on { color:var(--gold); }
+
+  .submit { width:100%; padding:14px; background:var(--violet); color:#fff; border:none; border-radius:var(--rs);
+    font-size:15px; font-weight:700; cursor:pointer; font-family:var(--sans); margin-top:8px; letter-spacing:.02em; }
+  .submit:hover { background:#5a4bd4; }
+  .submit:disabled { opacity:.5; cursor:not-allowed; }
+
+  .done { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:40px 28px; text-align:center; }
+  .done .ic { font-size:44px; margin-bottom:14px; }
+  .done h2 { font-size:19px; font-weight:700; margin-bottom:10px; }
+  .done p { font-size:13px; color:var(--t2); line-height:1.7; margin-bottom:22px; }
+  .done .lnk { display:inline-block; margin:0 8px; padding:10px 20px; border-radius:var(--rs);
+    font-size:13px; font-weight:700; text-decoration:none; }
+  .done .lnk.p { background:var(--violet); color:#fff; }
+  .done .lnk.s { background:#EEF0F6; color:var(--t1); }
+  .hidden { display:none !important; }
+  .err { color:var(--coral); font-size:12px; margin-top:6px; }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-in">
+    <div class="eyebrow">EXCEED GROUP &nbsp;/&nbsp; AI ACTIVATION</div>
+    <h1>AI活用事例を投稿する</h1>
+    <p>あなたの「AIでこう変わった」を共有してください。<br>ダッシュボードに反映され、みんなの参考になります。</p>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ログイン前 -->
+  <div id="gate" class="gate">
+    <h2>まずはログイン</h2>
+    <p>社内Googleアカウントでログインしてください。<br>お名前・部門は自動で判定されるので入力不要です。</p>
+    <button class="g-btn" id="login-btn">
+      <svg viewBox="0 0 48 48"><path fill="#4285F4" d="M45.12 24.5c0-1.56-.14-3.06-.4-4.5H24v8.51h11.84c-.51 2.75-2.06 5.08-4.39 6.64v5.52h7.11c4.16-3.83 6.56-9.47 6.56-16.17z"/><path fill="#34A853" d="M24 46c5.94 0 10.92-1.97 14.56-5.33l-7.11-5.52c-1.97 1.32-4.49 2.1-7.45 2.1-5.73 0-10.58-3.87-12.31-9.07H4.34v5.7C7.96 41.07 15.4 46 24 46z"/><path fill="#FBBC05" d="M11.69 28.18C11.25 26.86 11 25.45 11 24s.25-2.86.69-4.18v-5.7H4.34C2.85 17.09 2 20.45 2 24s.85 6.91 2.34 9.88l7.35-5.7z"/><path fill="#EA4335" d="M24 10.75c3.23 0 6.13 1.11 8.41 3.29l6.31-6.31C34.91 4.18 29.93 2 24 2 15.4 2 7.96 6.93 4.34 14.12l7.35 5.7c1.73-5.2 6.58-9.07 12.31-9.07z"/></svg>
+      Googleでログイン
+    </button>
+    <div class="err" id="gate-err"></div>
+  </div>
+
+  <!-- フォーム本体 -->
+  <div id="form" class="hidden">
+    <div class="who">
+      投稿者：<b id="who-name"></b><span id="who-dept" style="color:#6B5FC0"></span>
+      <span class="out" id="logout">別のアカウント</span>
+    </div>
+
+    <div class="field">
+      <label>使用したAIツール<span class="req">*</span></label>
+      <select id="f-tool">
+        <option value="Claude">Claude</option>
+        <option value="ChatGPT">ChatGPT</option>
+        <option value="Microsoft Copilot">Microsoft Copilot</option>
+        <option value="Gemini">Gemini</option>
+        <option value="その他">その他</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>活用シーン<span class="req">*</span></label>
+      <select id="f-scene">
+        <option>文書作成・編集</option><option>データ分析</option><option>アイデア出し</option>
+        <option>メール・連絡文</option><option>調査・リサーチ</option><option>コーディング</option>
+        <option>翻訳</option><option>その他</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>事例タイトル<span class="req">*</span><span class="hint">一言で</span></label>
+      <input type="text" id="f-title" placeholder="例：提案書の作成時間を大幅短縮した事例" maxlength="80">
+    </div>
+
+    <div class="field">
+      <label>具体的な使い方・プロンプト<span class="req">*</span></label>
+      <textarea id="f-body" placeholder="どんな指示をしたか、どんな手順で進めたかを書いてください。"></textarea>
+    </div>
+
+    <div class="field">
+      <label>効果・気づき<span class="req">*</span></label>
+      <textarea id="f-effect" placeholder="どう楽になったか、どんな成果があったか。" style="min-height:70px"></textarea>
+    </div>
+
+    <!-- 作業効率 -->
+    <div class="time-box">
+      <div class="tt">⏱ 作業効率（任意・でも入れると効果が見えます）</div>
+      <div class="td">この作業にかかっていた時間を「分」で入力してください。削減率が自動計算され、ダッシュボードの「累計削減時間」に加算されます。</div>
+      <div class="time-inputs">
+        <div>
+          <span class="mini-label">導入前（分）</span>
+          <input type="text" id="f-before" inputmode="numeric" placeholder="例：180">
+        </div>
+        <div class="arrow">→</div>
+        <div>
+          <span class="mini-label">導入後（分）</span>
+          <input type="text" id="f-after" inputmode="numeric" placeholder="例：30">
+        </div>
+      </div>
+      <div class="preview" id="time-preview"></div>
+    </div>
+
+    <div class="field">
+      <label>AIの使いやすさ<span class="hint">1=難しい 〜 5=簡単</span></label>
+      <div class="stars" id="stars">
+        <span class="star" data-v="1">★</span><span class="star" data-v="2">★</span>
+        <span class="star" data-v="3">★</span><span class="star" data-v="4">★</span>
+        <span class="star" data-v="5">★</span>
+      </div>
+    </div>
+
+    <button class="submit" id="submit-btn">この内容で投稿する</button>
+    <div class="err" id="form-err"></div>
+  </div>
+
+  <!-- 完了 -->
+  <div id="done" class="done hidden">
+    <div class="ic">🎉</div>
+    <h2>投稿ありがとうございました！</h2>
+    <p>あなたの事例がダッシュボードに反映されました。<br>ぜひ他のメンバーの事例も見てみてください。</p>
+    <a href="/dashboard.html" class="lnk p">ダッシュボードを見る</a>
+    <a href="#" class="lnk s" id="again">もう1件投稿する</a>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, getDoc, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBL927g2X8CyMVTl-3qPzulX5ekYlQgE1U",
+  authDomain: "exceed-secretary-system.firebaseapp.com",
+  projectId: "exceed-secretary-system",
+  storageBucket: "exceed-secretary-system.appspot.com",
+  messagingSenderId: "66742506821",
+  appId: "1:66742506821:web:e22ad43da290c765f8da2c",
+};
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+// 社員マスタ（Firestoreが空でも動くようフォールバック内蔵）
+const EMP_MAP = {"y-togashi@ych-exceed.com":{"name":"冨樫 宜信","dept":"役員","role":"代表取締役"},"m-togashi@ych-exceed.com":{"name":"冨樫 美好","dept":"役員","role":"専務取締役"},"koseki@ych-exceed.com":{"name":"小関 信吾","dept":"役員","role":"常務取締役"},"yamamoto@ych-exceed.com":{"name":"山本 剛大","dept":"役員","role":"取締役"},"kazuo-suzuki@sample.com":{"name":"鈴木 和夫","dept":"工事部","role":""},"suzuki@ych-exceed.com":{"name":"鈴木 覚","dept":"工事部","role":""},"matsumoto@ych-exceed.com":{"name":"松本 康志","dept":"工事部","role":""},"imai@ych-exceed.com":{"name":"今井 昭義","dept":"工事部","role":""},"farook@ych-exceed.com":{"name":"ファルハーン ファールック","dept":"工事部","role":""},"kimura@ych-exceed.com":{"name":"木村 亮太","dept":"工事部","role":""},"yoshio.izuta@gmail.com":{"name":"伊豆田 好男","dept":"工事部","role":""},"togashi_24@ych-exceed.com":{"name":"冨樫 優太","dept":"工事部","role":""},"kouki-saito@ych-exceed.com":{"name":"西塔 光樹","dept":"工事部","role":""},"onuma@ych-exceed.com":{"name":"大沼 絵梨","dept":"総務","role":""},"shoko-suzuki@ych-exceed.com":{"name":"鈴木 尚子","dept":"総務","role":""},"otaki@ych-exceed.com":{"name":"大滝 友美","dept":"工務サポート","role":""},"sakai@ych-exceed.com":{"name":"酒井 唯","dept":"IC課","role":""},"kidoguchi@ych-exceed.com":{"name":"城戸口 孝一","dept":"工務サポート","role":""},"takada@besto-haus.com":{"name":"高田 美沙","dept":"IC課","role":""},"kikuchi@ych-exceed.com":{"name":"菊地 和樹","dept":"設計課","role":""},"shohei_sakai@ych-exceed.com":{"name":"酒井 翔平","dept":"工務課","role":""},"saito_24@besto-haus.com":{"name":"齋藤 あずさ","dept":"IC課","role":""},"kokubun@ych-exceed.com":{"name":"國分 亮","dept":"工務課","role":""},"obari@ych-exceed.com":{"name":"大張 早葵","dept":"工務サポート","role":""},"yasutaka-saio@ych-exceed.com":{"name":"齋藤 康貴","dept":"設計課","role":""},"matsuda@ych-exceed.com":{"name":"松田 卓磨","dept":"工務課","role":""},"ouchi@ych-exceed.com":{"name":"大内 梨央","dept":"IC課","role":""},"aoyama@ych-exceed.com":{"name":"青山 真彩美","dept":"企画開発部","role":""},"moemi-sato@ych-exceed.com":{"name":"佐藤 萌美","dept":"営業","role":""},"daichi-takahashi@ych-exceed.com":{"name":"髙橋 大地","dept":"その他","role":""},"tegawa@ych-exceed.com":{"name":"手川 武海","dept":"社長室","role":""},"risa-watanabe@ych-exceed.com":{"name":"渡辺 莉沙","dept":"経理課","role":""},"hayasaka@ych-exceed.com":{"name":"早坂 都古","dept":"工務サポート","role":""},"chika-takahashi@ych-exceed.com":{"name":"高橋 知佳","dept":"総務","role":""},"sasaki@besto-haus.com":{"name":"佐々木 絢子","dept":"営業","role":""},"yamagishi@besto-haus.com":{"name":"山岸 和樹","dept":"営業","role":"PG HOUSE 山形 事業責任者"},"oka@yamagata.pg-house.jp":{"name":"岡 亮志","dept":"営業","role":""},"homma@ych-exceed.com":{"name":"本間 繁樹","dept":"営業","role":"店長"},"nabeshima@ych-exceed.com":{"name":"鍋島 雄佑","dept":"営業","role":""},"shun-arakawa@ych-exceed.com":{"name":"荒川 瞬","dept":"営業","role":""},"ryoma-kato@ych-exceed.com":{"name":"加藤 亮真","dept":"営業","role":""},"higashimoto@besto-haus.com":{"name":"東本 隆志","dept":"営業","role":"店長"},"shinya-kudo@besto-haus.com":{"name":"工藤 信哉","dept":"営業","role":"店長"},"hidetoshi-konno@besto-haus.com":{"name":"近野 秀敏","dept":"営業","role":"店長"},"inamura@besto-haus.com":{"name":"稲村 正明","dept":"営業","role":""},"kunii@besto-haus.com":{"name":"國井 岳人","dept":"営業","role":""},"takahiro-kikuchi@besto-haus.com":{"name":"菊地 高広","dept":"営業","role":""},"sakurai_24@besto-haus.com":{"name":"櫻井 颯人","dept":"営業","role":""},"sugawara@besto-haus.com":{"name":"菅原 貴久","dept":"営業","role":""},"masaki-hasegawa@besto-haus.com":{"name":"長谷川 雅輝","dept":"営業","role":""},"takeuchi_23@besto-haus.com":{"name":"竹内 大翔","dept":"CX課","role":""},"kaori-goto@ych-exceed.com":{"name":"後藤 佳央里","dept":"CX課","role":""},"maki-sato@ych-exceed.com":{"name":"佐藤 真紀","dept":"CX課","role":""},"ayumi-sakurai@ych-exceed.com":{"name":"櫻井 歩","dept":"CX課","role":""},"yuuto-sato@ych-exceed.com":{"name":"佐藤 裕斗","dept":"工務課","role":""},"senri-ishikawa@exceed-group.co.jp":{"name":"石川 千莉","dept":"営業","role":""}};
+
+let currentUser = null;
+let currentEmp = null;
+let difficulty = 3;
+
+const $ = id => document.getElementById(id);
+
+// --- ログイン ---
+$('login-btn').onclick = async () => {
+  $('gate-err').textContent = '';
+  try { await signInWithPopup(auth, provider); }
+  catch(e){ $('gate-err').textContent = 'ログインに失敗しました：' + e.message; }
+};
+$('logout').onclick = () => signOut(auth);
+
+onAuthStateChanged(auth, async (user) => {
+  if(user){
+    currentUser = user;
+    const email = (user.email||'').toLowerCase();
+    // まずFirestoreの社員マスタ、なければ埋め込みマスタ
+    let emp = null;
+    try {
+      const snap = await getDoc(doc(db,'aiStudy_employees',email));
+      if(snap.exists()) emp = snap.data();
+    } catch(e){}
+    if(!emp) emp = EMP_MAP[email] || null;
+    currentEmp = emp || { name: user.displayName || email, dept:'不明', role:'' };
+
+    $('who-name').textContent = currentEmp.name;
+    $('who-dept').textContent = currentEmp.dept ? '（'+currentEmp.dept+'）' : '';
+    $('gate').classList.add('hidden');
+    $('done').classList.add('hidden');
+    $('form').classList.remove('hidden');
+  } else {
+    currentUser = null; currentEmp = null;
+    $('gate').classList.remove('hidden');
+    $('form').classList.add('hidden');
+    $('done').classList.add('hidden');
+  }
+});
+
+// --- 星 ---
+document.querySelectorAll('.star').forEach(s => {
+  s.onclick = () => { difficulty = Number(s.dataset.v); paintStars(); };
+});
+function paintStars(){ document.querySelectorAll('.star').forEach(s=>{
+  s.classList.toggle('on', Number(s.dataset.v) <= difficulty); }); }
+paintStars();
+
+// --- 削減率プレビュー ---
+function updatePreview(){
+  const b = parseInt($('f-before').value,10);
+  const a = parseInt($('f-after').value,10);
+  const el = $('time-preview');
+  if(b>0 && a>=0 && a<=b){
+    const saved = b-a; const rate = Math.round((saved/b)*1000)/10;
+    el.textContent = `▼ ${rate}% 削減（${saved}分の短縮）`;
+  } else if(b>0 && a>b){
+    el.textContent = '導入後の時間が導入前より長くなっています';
+  } else { el.textContent=''; }
+}
+$('f-before').oninput = updatePreview;
+$('f-after').oninput = updatePreview;
+
+// --- 投稿 ---
+$('submit-btn').onclick = async () => {
+  $('form-err').textContent = '';
+  const tool = $('f-tool').value;
+  const scene = $('f-scene').value;
+  const title = $('f-title').value.trim();
+  const body = $('f-body').value.trim();
+  const effect = $('f-effect').value.trim();
+  const before = parseInt($('f-before').value,10);
+  const after = parseInt($('f-after').value,10);
+
+  if(!title || !body || !effect){
+    $('form-err').textContent = 'タイトル・使い方・効果は必須です。';
+    return;
+  }
+
+  const data = {
+    email: currentUser.email.toLowerCase(),
+    name: currentEmp.name,
+    dept: currentEmp.dept || '不明',
+    role: currentEmp.role || '',
+    tool, scene, title, body, effect,
+    difficulty,
+    likesCount: 0,
+    createdAt: serverTimestamp(),
+  };
+  if(!isNaN(before) && before>0) data.beforeMin = before;
+  if(!isNaN(after) && after>=0) data.afterMin = after;
+
+  $('submit-btn').disabled = true;
+  $('submit-btn').textContent = '投稿中...';
+  try {
+    await addDoc(collection(db,'aiStudy_cases'), data);
+    $('form').classList.add('hidden');
+    $('done').classList.remove('hidden');
+    window.scrollTo({top:0, behavior:'smooth'});
+  } catch(e){
+    $('form-err').textContent = '投稿に失敗しました：' + e.message;
+  } finally {
+    $('submit-btn').disabled = false;
+    $('submit-btn').textContent = 'この内容で投稿する';
+  }
+};
+
+// --- もう1件 ---
+$('again').onclick = (e) => {
+  e.preventDefault();
+  ['f-title','f-body','f-effect','f-before','f-after'].forEach(id=>$(id).value='');
+  difficulty = 3; paintStars(); $('time-preview').textContent='';
+  $('done').classList.add('hidden');
+  $('form').classList.remove('hidden');
+};
+</script>
+</body>
+</html>

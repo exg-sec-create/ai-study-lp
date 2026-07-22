@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI活用ダッシュボード | EXCEED GROUP</title>
+<style>
+  :root {
+    --ink:#0E1330; --ink2:#1A2150; --violet:#6C5CE7; --violet2:#8B7BF0;
+    --teal:#1FB6A6; --gold:#E0B341; --coral:#E8654F;
+    --paper:#F7F8FC; --card:#FFFFFF; --line:rgba(20,28,70,0.10);
+    --t1:#12173A; --t2:#5A6288; --t3:#9AA0C0;
+    --r:14px; --rs:10px;
+    --sans:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;
+    --serif:'Hiragino Mincho ProN','Yu Mincho',serif;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:var(--sans); background:var(--paper); color:var(--t1); font-size:14px; -webkit-font-smoothing:antialiased; }
+  .wrap { max-width:1080px; margin:0 auto; padding:0 20px 60px; }
+
+  /* Hero */
+  .hero { background:linear-gradient(135deg,#0E1330 0%,#1A2150 55%,#2A2470 100%);
+    margin:0 -20px 26px; padding:34px 40px 30px; position:relative; overflow:hidden; }
+  .hero::before { content:''; position:absolute; top:-80px; right:-40px; width:280px; height:280px;
+    background:radial-gradient(circle,rgba(108,92,231,.55),transparent 70%); }
+  .hero::after { content:''; position:absolute; bottom:-120px; right:120px; width:260px; height:260px;
+    background:radial-gradient(circle,rgba(31,182,166,.4),transparent 70%); }
+  .hero-in { position:relative; z-index:1; max-width:1040px; margin:0 auto; }
+  .eyebrow { font-size:11px; letter-spacing:.28em; color:var(--violet2); font-weight:700; margin-bottom:10px; }
+  .hero h1 { font-family:var(--serif); font-size:34px; font-weight:600; color:#fff; letter-spacing:.02em; line-height:1.25; }
+  .hero p { color:#B8BEE8; font-size:13px; margin-top:8px; }
+  .updated { position:absolute; top:0; right:0; font-size:11px; color:#8A90C0; }
+
+  /* Hero stat strip */
+  .hero-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:24px;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.10); border-radius:var(--r); overflow:hidden; }
+  .hstat { padding:16px 18px; border-right:1px solid rgba(255,255,255,.08); }
+  .hstat:last-child { border-right:none; }
+  .hstat .n { font-family:var(--serif); font-size:30px; font-weight:600; color:#fff; line-height:1; letter-spacing:.01em; }
+  .hstat .n .u { font-size:14px; color:var(--violet2); margin-left:3px; font-family:var(--sans); }
+  .hstat .l { font-size:11px; color:#9AA0D0; margin-top:7px; letter-spacing:.04em; }
+  .hstat.accent .n { color:var(--gold); }
+
+  /* Tabs */
+  .tabs { display:flex; gap:4px; margin-bottom:22px; border-bottom:1px solid var(--line); }
+  .tab { padding:11px 18px; font-size:13px; font-weight:600; cursor:pointer; border:none; background:none;
+    color:var(--t2); border-bottom:2px solid transparent; margin-bottom:-1px; font-family:var(--sans); }
+  .tab.on { color:var(--violet); border-bottom-color:var(--violet); }
+  .tab:hover:not(.on) { color:var(--t1); }
+  .sec { display:none; }
+  .sec.on { display:block; animation:fade .3s ease; }
+  @keyframes fade { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
+
+  .section-label { font-size:11px; letter-spacing:.18em; color:var(--t3); font-weight:700; margin:0 0 12px; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:18px 20px; }
+  .card h3 { font-size:13px; font-weight:700; color:var(--t1); margin-bottom:16px; }
+
+  /* horizontal bars */
+  .bar-row { display:flex; align-items:center; gap:10px; margin-bottom:11px; }
+  .bar-row:last-child { margin-bottom:0; }
+  .bar-label { font-size:12px; color:var(--t2); width:82px; flex-shrink:0; text-align:right;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .bar-track { flex:1; background:#EEF0F8; border-radius:6px; height:9px; overflow:hidden; }
+  .bar-fill { height:100%; border-radius:6px; transition:width .8s cubic-bezier(.2,.8,.2,1); }
+  .bar-val { font-size:12px; font-weight:700; color:var(--t1); width:52px; }
+
+  /* efficiency highlight card */
+  .eff-hero { background:linear-gradient(120deg,#0E1330,#241E63); border-radius:var(--r); padding:22px 24px;
+    color:#fff; margin-bottom:16px; display:flex; align-items:center; gap:28px; }
+  .eff-hero .big { font-family:var(--serif); font-size:52px; font-weight:600; color:var(--gold); line-height:1; }
+  .eff-hero .big .u { font-size:20px; font-family:var(--sans); margin-left:4px; }
+  .eff-hero .txt .t { font-size:15px; font-weight:700; }
+  .eff-hero .txt .d { font-size:12px; color:#B8BEE8; margin-top:6px; line-height:1.6; }
+  .eff-divider { width:1px; height:56px; background:rgba(255,255,255,.15); }
+
+  /* case cards */
+  .filter { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; align-items:center; }
+  .chip { padding:5px 13px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer;
+    border:1px solid var(--line); background:#fff; color:var(--t2); }
+  .chip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .case { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:16px 18px; margin-bottom:11px; }
+  .case-top { display:flex; align-items:flex-start; gap:8px; margin-bottom:7px; flex-wrap:wrap; }
+  .badge { padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700; white-space:nowrap; }
+  .b-Claude { background:#E3F7F3; color:#0C6E62; }
+  .b-ChatGPT { background:#EAE7FC; color:#4A3D9E; }
+  .b-Copilot { background:#EDF0FF; color:#3550B0; }
+  .b-Gemini { background:#FBF1D9; color:#8A6410; }
+  .eff-badge { padding:2px 9px; border-radius:20px; font-size:11px; font-weight:700; background:#0E1330; color:var(--gold); }
+  .case-title { font-size:14px; font-weight:700; flex:1; line-height:1.45; min-width:180px; }
+  .case-meta { font-size:12px; color:var(--t2); margin-bottom:8px; }
+  .case-body { font-size:13px; color:var(--t2); line-height:1.7; margin-bottom:11px; }
+  .case-foot { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+  .tag { padding:3px 9px; background:#F0F2FA; color:var(--t2); border-radius:8px; font-size:11px; font-weight:600; }
+  .tag.teal { background:#E3F7F3; color:#0C6E62; }
+  .like { display:flex; align-items:center; gap:5px; padding:5px 13px; border-radius:20px;
+    border:1px solid var(--line); background:none; cursor:pointer; font-size:12px; color:var(--t2);
+    font-family:var(--sans); margin-left:auto; font-weight:600; transition:all .15s; }
+  .like.on { background:#FDECEA; border-color:var(--coral); color:#C33A26; }
+
+  /* ranking */
+  .rank { display:flex; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); }
+  .rank:last-child { border-bottom:none; }
+  .rank-n { font-family:var(--serif); font-size:16px; font-weight:600; width:26px; text-align:center; color:var(--t3); flex-shrink:0; }
+  .rank-n.m1 { color:var(--gold); } .rank-n.m2 { color:#9AA0C0; } .rank-n.m3 { color:#C08A52; }
+  .ava { width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:700; flex-shrink:0; }
+  .rank-info { flex:1; min-width:0; }
+  .rank-name { font-size:13px; font-weight:700; }
+  .rank-dept { font-size:11px; color:var(--t2); }
+  .rank-stats { display:flex; gap:9px; align-items:center; }
+  .pill { font-size:12px; color:var(--t2); }
+  .tier { padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+  .tier-g { background:#FBF1D9; color:#8A6410; } .tier-s { background:#EEF0F6; color:#555C7A; }
+  .tier-b { background:#F6EBE2; color:#8A5A2E; } .tier-n { background:#F2F3F8; color:var(--t3); }
+
+  /* top5 efficiency */
+  .eff-item { display:flex; align-items:center; gap:14px; padding:13px 0; border-bottom:1px solid var(--line); }
+  .eff-item:last-child { border-bottom:none; }
+  .eff-rank { font-family:var(--serif); font-size:20px; font-weight:600; color:var(--violet); width:30px; text-align:center; flex-shrink:0; }
+  .eff-info { flex:1; min-width:0; }
+  .eff-t { font-size:13px; font-weight:700; margin-bottom:3px; }
+  .eff-sub { font-size:11px; color:var(--t2); }
+  .eff-nums { text-align:right; flex-shrink:0; }
+  .eff-pct { font-size:19px; font-weight:700; color:var(--teal); font-family:var(--serif); }
+  .eff-time { font-size:11px; color:var(--t2); margin-top:2px; }
+  .arrow { color:var(--t3); }
+
+  .empty { text-align:center; color:var(--t3); font-size:13px; padding:50px 0; }
+  .demo-note { background:#FBF1D9; color:#8A6410; border-radius:var(--rs); padding:9px 14px; font-size:12px;
+    margin-bottom:18px; text-align:center; font-weight:600; }
+
+  @media(max-width:720px){
+    .hero-stats{grid-template-columns:1fr 1fr;}
+    .hstat{border-bottom:1px solid rgba(255,255,255,.08);}
+    .grid2{grid-template-columns:1fr;}
+    .eff-hero{flex-direction:column;gap:14px;align-items:flex-start;}
+    .eff-divider{display:none;}
+  }
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="hero-in">
+    <div class="updated" id="updated"></div>
+    <div class="eyebrow">EXCEED GROUP &nbsp;/&nbsp; AI ACTIVATION</div>
+    <h1>AI活用ダッシュボード</h1>
+    <p>社員の「AIでこう変わった」を、時間で可視化する</p>
+    <div class="hero-stats" id="hero-stats"></div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="demo-note" id="demo-note">🔸 現在サンプルデータを表示しています（Firestore接続後は実データに切り替わります）</div>
+
+  <div class="tabs">
+    <button class="tab on" onclick="ST('over',this)">概要</button>
+    <button class="tab" onclick="ST('cases',this)">事例一覧</button>
+    <button class="tab" onclick="ST('eff',this)">作業効率 TOP5</button>
+    <button class="tab" onclick="ST('rank',this)">ランキング</button>
+  </div>
+
+  <!-- 概要 -->
+  <div id="over" class="sec on">
+    <div class="eff-hero">
+      <div><div class="big" id="eh-hours">—<span class="u">時間</span></div></div>
+      <div class="eff-divider"></div>
+      <div class="txt">
+        <div class="t">これまでにAIが生み出した時間</div>
+        <div class="d" id="eh-desc">全事例の「導入前 − 導入後」の合計。<br>投稿が増えるほど、会社全体の削減時間が積み上がります。</div>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>ツール別 事例数</h3><div id="c-tool"></div></div>
+      <div class="card"><h3>活用シーン別 内訳</h3><div id="c-scene"></div></div>
+    </div>
+    <div class="card"><h3>部門別 削減時間（分）</h3><div id="c-dept"></div></div>
+  </div>
+
+  <!-- 事例一覧 -->
+  <div id="cases" class="sec">
+    <div class="filter">
+      <span style="font-size:12px;color:var(--t2);font-weight:600">絞り込み</span>
+      <span class="chip on" onclick="FC(this,'all')">すべて</span>
+      <span class="chip" onclick="FC(this,'tool:Claude')">Claude</span>
+      <span class="chip" onclick="FC(this,'tool:ChatGPT')">ChatGPT</span>
+      <span class="chip" onclick="FC(this,'dept:営業')">営業</span>
+      <span class="chip" onclick="FC(this,'dept:CX課')">CX課</span>
+      <span class="chip" onclick="FC(this,'liked')">いいね順</span>
+      <span class="chip" onclick="FC(this,'eff')">削減率順</span>
+    </div>
+    <div id="case-list"></div>
+  </div>
+
+  <!-- 作業効率TOP5 -->
+  <div id="eff" class="sec">
+    <div class="card">
+      <h3>削減率ランキング — AIで最も時間短縮できた事例</h3>
+      <div id="eff-list"></div>
+    </div>
+  </div>
+
+  <!-- ランキング -->
+  <div id="rank" class="sec">
+    <div class="card"><h3>投稿者ランキング</h3><div id="rank-list"></div></div>
+    <div class="card" style="margin-top:16px">
+      <h3>インセンティブ評価</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div style="background:#FBF1D9;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:20px">🥇</div><div style="font-size:13px;font-weight:700;color:#8A6410;margin-top:4px">Gold</div>
+          <div style="font-size:11px;color:#A67C1A;margin-top:4px">3件以上 & いいね10+</div></div>
+        <div style="background:#EEF0F6;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:20px">🥈</div><div style="font-size:13px;font-weight:700;color:#555C7A;margin-top:4px">Silver</div>
+          <div style="font-size:11px;color:#6B7290;margin-top:4px">2件以上 & いいね5+</div></div>
+        <div style="background:#F6EBE2;border-radius:10px;padding:14px;text-align:center">
+          <div style="font-size:20px">🥉</div><div style="font-size:13px;font-weight:700;color:#8A5A2E;margin-top:4px">Bronze</div>
+          <div style="font-size:11px;color:#A5713E;margin-top:4px">1件以上 & いいね1+</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ============================================================
+//  Firebase SDK（v11 モジュール版・CDN）
+// ============================================================
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, runTransaction, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+// exceed-secretary-system の設定（既存LPと同じ）
+const firebaseConfig = {
+  apiKey: "AIzaSyBL927g2X8CyMVTl-3qPzulX5ekYlQgE1U",
+  authDomain: "exceed-secretary-system.firebaseapp.com",
+  projectId: "exceed-secretary-system",
+  storageBucket: "exceed-secretary-system.appspot.com",
+  messagingSenderId: "66742506821",
+  appId: "1:66742506821:web:e22ad43da290c765f8da2c",
+};
+const fbApp = initializeApp(firebaseConfig);
+const fdb = getFirestore(fbApp);
+
+// ============================================================
+//  データソース切り替え
+//  USE_FIRESTORE = true  … Firestore実データ
+//  USE_FIRESTORE = false … サンプルデータ（動作確認用）
+// ============================================================
+const USE_FIRESTORE = true;
+
+// --- サンプルデータ（作業効率つき） ---
+const SAMPLE = [
+  { id:'s1', name:'冨樫 優太', dept:'工事部', role:'', tool:'Claude', scene:'文書作成・編集',
+    title:'工事報告書のドラフト作成を自動化', body:'現場メモを箇条書きで渡し、報告書の体裁に整形。手直しだけで完成するようになった。',
+    effect:'報告書の作成が大幅短縮', beforeMin:120, afterMin:25, difficulty:2, likesCount:7, createdAt:'2026-07-17' },
+  { id:'s2', name:'後藤 佳央里', dept:'CX課', role:'', tool:'ChatGPT', scene:'メール・連絡文',
+    title:'顧客への定型メールを一括生成', body:'状況を入力すると丁寧な文面を提案してくれる。トーン調整も指示するだけ。',
+    effect:'メール作成の時短', beforeMin:30, afterMin:8, difficulty:1, likesCount:12, createdAt:'2026-07-17' },
+  { id:'s3', name:'菊地 和樹', dept:'設計課', role:'', tool:'Claude', scene:'データ分析',
+    title:'見積もりデータの比較表を自動作成', body:'複数の見積もりを貼り付けて比較表に。差分の指摘までしてくれる。',
+    effect:'比較検討が高速化', beforeMin:90, afterMin:20, difficulty:3, likesCount:5, createdAt:'2026-07-16' },
+  { id:'s4', name:'手川 武海', dept:'社長室', role:'', tool:'Claude', scene:'アイデア出し',
+    title:'社内勉強会の企画・資料構成', body:'テーマを渡すとアジェンダとスライド構成を提案。ゼロから考える時間が消えた。',
+    effect:'企画時間の削減', beforeMin:180, afterMin:40, difficulty:2, likesCount:9, createdAt:'2026-07-15' },
+  { id:'s5', name:'佐藤 真紀', dept:'CX課', role:'', tool:'Gemini', scene:'調査・リサーチ',
+    title:'競合サービスの情報収集をまとめて依頼', body:'調べたい観点を渡すと要点を整理。裏取りは必要だが下調べが一気に進む。',
+    effect:'リサーチの効率化', beforeMin:60, afterMin:20, difficulty:2, likesCount:4, createdAt:'2026-07-15' },
+  { id:'s6', name:'渡辺 莉沙', dept:'経理課', role:'', tool:'Microsoft Copilot', scene:'データ分析',
+    title:'Excel関数のエラー解決をその場で', body:'エラーの数式を貼ると原因と修正案を提示。自己解決できるようになった。',
+    effect:'集計作業の時短', beforeMin:45, afterMin:10, difficulty:2, likesCount:6, createdAt:'2026-07-14' },
+];
+
+const TCOL = { 'Claude':'#1FB6A6','ChatGPT':'#6C5CE7','Microsoft Copilot':'#3550B0','Gemini':'#E0B341','その他':'#8A90C0' };
+const AVC = [['#EAE7FC','#4A3D9E'],['#E3F7F3','#0C6E62'],['#FBF1D9','#8A6410'],['#EDF0FF','#3550B0'],['#F6EBE2','#8A5A2E']];
+
+let CASES = [];
+let likes = {}, likedMe = {};
+let curF = 'all';
+
+function badgeClass(t){ if(t==='Microsoft Copilot')return 'b-Copilot'; return 'b-'+t; }
+function calc(c){ const s=(c.beforeMin&&c.afterMin!=null)?c.beforeMin-c.afterMin:null;
+  const r=(c.beforeMin&&c.beforeMin>0&&c.afterMin!=null)?Math.round((c.beforeMin-c.afterMin)/c.beforeMin*1000)/10:null;
+  return {saved:s, rate:r}; }
+
+function loadLikes(){
+  try{likes=JSON.parse(localStorage.getItem('ai2-lk')||'{}')}catch(e){likes={}}
+  try{likedMe=JSON.parse(localStorage.getItem('ai2-lm')||'{}')}catch(e){likedMe={}}
+  CASES.forEach(c=>{ if(!(c.id in likes)) likes[c.id]=c.likesCount||0; });
+}
+function saveLikes(){ try{localStorage.setItem('ai2-lk',JSON.stringify(likes));localStorage.setItem('ai2-lm',JSON.stringify(likedMe));}catch(e){} }
+function toggleLike(id){
+  if(likedMe[id]){likes[id]=Math.max(0,(likes[id]||0)-1);delete likedMe[id];}
+  else{likes[id]=(likes[id]||0)+1;likedMe[id]=true;}
+  saveLikes(); renderCases(curF); renderHero(); renderRank();
+  if(USE_FIRESTORE) writeLike(id, !!likedMe[id]);
+}
+
+// Firestore: いいね数を安全に増減（トランザクション）
+async function writeLike(id, isNowLiked){
+  try{
+    const ref = doc(fdb, 'aiStudy_cases', id);
+    await runTransaction(fdb, async (tx)=>{
+      const snap = await tx.get(ref);
+      if(!snap.exists()) return;
+      const cur = snap.data().likesCount || 0;
+      tx.update(ref, { likesCount: Math.max(0, cur + (isNowLiked ? 1 : -1)) });
+    });
+  }catch(e){ console.warn('like write failed', e); }
+}
+
+// Firestore: 事例を全件取得
+async function fetchFromFirestore(){
+  const q = query(collection(fdb, 'aiStudy_cases'), orderBy('createdAt', 'desc'));
+  const snap = await getDocs(q);
+  const list = [];
+  snap.forEach(d=>{
+    const x = d.data();
+    let created = x.createdAt;
+    // TimestampをYYYY/M/D表記へ
+    if(created && created.toDate) created = created.toDate();
+    const ds = created instanceof Date
+      ? (created.getMonth()+1)+'/'+created.getDate()
+      : (typeof created==='string' ? created : '');
+    list.push({
+      id: d.id,
+      name: x.name || x.email || '不明',
+      dept: x.dept || '不明',
+      role: x.role || '',
+      tool: x.tool || 'その他',
+      scene: x.scene || '',
+      title: x.title || '',
+      body: x.body || '',
+      effect: x.effect || '',
+      beforeMin: (x.beforeMin!=null)? Number(x.beforeMin): null,
+      afterMin:  (x.afterMin!=null)?  Number(x.afterMin):  null,
+      difficulty: Number(x.difficulty)||3,
+      likesCount: Number(x.likesCount)||0,
+      createdAt: ds,
+    });
+  });
+  return list;
+}
+
+function renderHero(){
+  const totalSaved = CASES.reduce((a,c)=>a+(calc(c).saved||0),0);
+  const hours = Math.round(totalSaved/60*10)/10;
+  const users = [...new Set(CASES.map(c=>c.name))].length;
+  const rates = CASES.map(c=>calc(c).rate).filter(r=>r!=null);
+  const avgRate = rates.length?Math.round(rates.reduce((a,b)=>a+b,0)/rates.length):0;
+  const totalLikes = Object.values(likes).reduce((a,b)=>a+b,0);
+
+  document.getElementById('eh-hours').innerHTML = hours+'<span class="u">時間</span>';
+  document.getElementById('hero-stats').innerHTML = `
+    <div class="hstat"><div class="n">${CASES.length}<span class="u">件</span></div><div class="l">投稿された事例</div></div>
+    <div class="hstat accent"><div class="n">${hours}<span class="u">h</span></div><div class="l">累計削減時間</div></div>
+    <div class="hstat"><div class="n">${avgRate}<span class="u">%</span></div><div class="l">平均削減率</div></div>
+    <div class="hstat"><div class="n">${users}<span class="u">名</span></div><div class="l">投稿者数</div></div>`;
+}
+
+function countBy(key){ const m={}; CASES.forEach(c=>{const k=c[key]||'不明';m[k]=(m[k]||0)+1}); return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
+function savedByDept(){ const m={}; CASES.forEach(c=>{const s=calc(c).saved||0;m[c.dept]=(m[c.dept]||0)+s}); return Object.entries(m).sort((a,b)=>b[1]-a[1]); }
+
+function bars(id,data,color,unit){
+  const mx=data[0]?data[0][1]:1;
+  document.getElementById(id).innerHTML = data.map(([l,v])=>`
+    <div class="bar-row"><div class="bar-label" title="${l}">${l}</div>
+    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/mx*100)}%;background:${typeof color==='function'?color(l):color}"></div></div>
+    <div class="bar-val">${v}${unit||''}</div></div>`).join('') || '<div class="empty">データなし</div>';
+}
+function renderOverview(){
+  bars('c-tool', countBy('tool'), l=>TCOL[l]||'#8A90C0', '件');
+  bars('c-scene', countBy('scene'), '#6C5CE7', '件');
+  bars('c-dept', savedByDept(), '#1FB6A6', '分');
+}
+
+function renderCases(f){
+  curF=f;
+  let d=[...CASES];
+  if(f==='liked') d.sort((a,b)=>(likes[b.id]||0)-(likes[a.id]||0));
+  else if(f==='eff') d.sort((a,b)=>(calc(b).rate||0)-(calc(a).rate||0));
+  else if(f.startsWith('tool:')) d=d.filter(c=>c.tool===f.slice(5));
+  else if(f.startsWith('dept:')) d=d.filter(c=>c.dept===f.slice(5));
+  const el=document.getElementById('case-list');
+  if(!d.length){el.innerHTML='<div class="empty">事例がまだありません</div>';return;}
+  el.innerHTML=d.map(c=>{
+    const {saved,rate}=calc(c); const cnt=likes[c.id]||0; const isL=!!likedMe[c.id];
+    return `<div class="case">
+      <div class="case-top">
+        <span class="badge ${badgeClass(c.tool)}">${c.tool}</span>
+        ${rate!=null?`<span class="eff-badge">▼ ${rate}% 削減</span>`:''}
+        <span class="case-title">${c.title}</span>
+      </div>
+      <div class="case-meta">${c.dept} · ${c.name} · ${c.scene} · ${c.createdAt}</div>
+      <div class="case-body">${c.body}</div>
+      <div class="case-foot">
+        ${c.effect?`<span class="tag teal">${c.effect}</span>`:''}
+        ${saved!=null?`<span class="tag">${c.beforeMin}分 → ${c.afterMin}分（${saved}分短縮）</span>`:''}
+        <button class="like ${isL?'on':''}" onclick="toggleLike('${c.id}')">♥ ${cnt}</button>
+      </div></div>`;
+  }).join('');
+}
+function FC(el,f){ document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on')); el.classList.add('on'); renderCases(f); }
+
+function renderEff(){
+  const d=[...CASES].filter(c=>calc(c).rate!=null).sort((a,b)=>calc(b).rate-calc(a).rate).slice(0,5);
+  const el=document.getElementById('eff-list');
+  if(!d.length){el.innerHTML='<div class="empty">作業効率データのある事例がまだありません</div>';return;}
+  el.innerHTML=d.map((c,i)=>{ const {saved,rate}=calc(c);
+    return `<div class="eff-item">
+      <div class="eff-rank">${i+1}</div>
+      <div class="eff-info"><div class="eff-t">${c.title}</div>
+        <div class="eff-sub">${c.dept} · ${c.name} · ${c.tool}　|　${c.beforeMin}分 <span class="arrow">→</span> ${c.afterMin}分</div></div>
+      <div class="eff-nums"><div class="eff-pct">${rate}%</div><div class="eff-time">${saved}分の短縮</div></div>
+    </div>`;
+  }).join('');
+}
+
+function tierOf(n,l){ if(n>=3&&l>=10)return['Gold','tier-g'];if(n>=2&&l>=5)return['Silver','tier-s'];if(n>=1&&l>=1)return['Bronze','tier-b'];return['—','tier-n']; }
+function renderRank(){
+  const um={};
+  CASES.forEach(c=>{ if(!um[c.name])um[c.name]={dept:c.dept,n:0,lk:0}; um[c.name].n++; um[c.name].lk+=(likes[c.id]||0); });
+  const s=Object.entries(um).map(([name,u])=>({name,...u,score:u.n*10+u.lk*3})).sort((a,b)=>b.score-a.score);
+  const el=document.getElementById('rank-list');
+  if(!s.length){el.innerHTML='<div class="empty">データなし</div>';return;}
+  el.innerHTML=s.map((u,i)=>{ const [tier,tc]=tierOf(u.n,u.lk); const [bg,fg]=AVC[i%AVC.length];
+    const ini=u.name.trim().split(/\s+/).map(p=>p[0]).join('').slice(0,2);
+    const mk=i<3?'m'+(i+1):'';
+    return `<div class="rank">
+      <div class="rank-n ${mk}">${i+1}</div>
+      <div class="ava" style="background:${bg};color:${fg}">${ini}</div>
+      <div class="rank-info"><div class="rank-name">${u.name}</div><div class="rank-dept">${u.dept}</div></div>
+      <div class="rank-stats"><span class="pill">📄${u.n}</span><span class="pill">♥${u.lk}</span><span class="tier ${tc}">${tier}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function ST(id,el){ document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById(id).classList.add('on'); el.classList.add('on'); }
+
+function renderAll(){ loadLikes(); renderHero(); renderOverview(); renderCases('all'); renderEff(); renderRank(); }
+
+async function init(){
+  document.getElementById('updated').textContent = '最終更新 '+new Date().toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  if(USE_FIRESTORE){
+    document.getElementById('demo-note').style.display='none';
+    try{
+      CASES = await fetchFromFirestore();
+    }catch(e){
+      console.error(e);
+      document.getElementById('demo-note').style.display='block';
+      document.getElementById('demo-note').textContent = '⚠️ データ取得に失敗しました。Firestoreルール・接続設定をご確認ください。';
+      CASES = [];
+    }
+  } else {
+    CASES = SAMPLE;
+  }
+  renderAll();
+}
+
+// モジュールscope内の関数を、HTMLのonclickから呼べるようwindowに公開
+window.ST = ST;
+window.FC = FC;
+window.toggleLike = toggleLike;
+
+init();
+</script>
+</body>
+</html>
