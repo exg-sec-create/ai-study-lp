@@ -145,6 +145,11 @@
       <textarea id="f-effect" placeholder="どう楽になったか、どんな成果があったか。" style="min-height:70px"></textarea>
     </div>
 
+    <div class="field">
+      <label>参考URL<span class="hint">任意・資料やツールへのリンク</span></label>
+      <input type="url" id="f-url" placeholder="https://example.com" maxlength="2048">
+    </div>
+
     <!-- 作業効率 -->
     <div class="time-box">
       <div class="tt">⏱ 作業効率（任意・でも入れると効果が見えます）</div>
@@ -281,12 +286,23 @@ $('submit-btn').onclick = async () => {
   const title = $('f-title').value.trim();
   const body = $('f-body').value.trim();
   const effect = $('f-effect').value.trim();
+  const referenceUrl = $('f-url').value.trim();
   const before = parseInt($('f-before').value,10);
   const after = parseInt($('f-after').value,10);
 
   if(!title || !body || !effect){
     $('form-err').textContent = 'タイトル・使い方・効果は必須です。';
     return;
+  }
+
+  if(referenceUrl){
+    try {
+      const url = new URL(referenceUrl);
+      if(!['http:', 'https:'].includes(url.protocol)) throw new Error('unsupported protocol');
+    } catch(e) {
+      $('form-err').textContent = '参考URLは http:// または https:// で始まる正しいURLを入力してください。';
+      return;
+    }
   }
 
   const data = {
@@ -299,6 +315,7 @@ $('submit-btn').onclick = async () => {
     likesCount: 0,
     createdAt: serverTimestamp(),
   };
+  if(referenceUrl) data.referenceUrl = referenceUrl;
   if(!isNaN(before) && before>0) data.beforeMin = before;
   if(!isNaN(after) && after>=0) data.afterMin = after;
 
@@ -320,7 +337,7 @@ $('submit-btn').onclick = async () => {
 // --- もう1件 ---
 $('again').onclick = (e) => {
   e.preventDefault();
-  ['f-title','f-body','f-effect','f-before','f-after'].forEach(id=>$(id).value='');
+  ['f-title','f-body','f-effect','f-url','f-before','f-after'].forEach(id=>$(id).value='');
   difficulty = 3; paintStars(); $('time-preview').textContent='';
   $('done').classList.add('hidden');
   $('form').classList.remove('hidden');

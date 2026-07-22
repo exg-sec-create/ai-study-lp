@@ -93,6 +93,8 @@
   .case-foot { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
   .tag { padding:3px 9px; background:#F0F2FA; color:var(--t2); border-radius:8px; font-size:11px; font-weight:600; }
   .tag.teal { background:#E3F7F3; color:#0C6E62; }
+  .reference-link { color:var(--violet); font-size:12px; font-weight:700; text-decoration:none; }
+  .reference-link:hover { text-decoration:underline; }
   .like { display:flex; align-items:center; gap:5px; padding:5px 13px; border-radius:20px;
     border:1px solid var(--line); background:none; cursor:pointer; font-size:12px; color:var(--t2);
     font-family:var(--sans); margin-left:auto; font-weight:600; transition:all .15s; }
@@ -308,6 +310,16 @@ async function writeLike(id, isNowLiked){
 }
 
 // Firestore: 事例を全件取得
+function safeHttpUrl(value){
+  if(typeof value !== 'string') return '';
+  try {
+    const url = new URL(value);
+    return ['http:', 'https:'].includes(url.protocol) ? url.href : '';
+  } catch(e) {
+    return '';
+  }
+}
+
 async function fetchFromFirestore(){
   const q = query(collection(fdb, 'aiStudy_cases'), orderBy('createdAt', 'desc'));
   const snap = await getDocs(q);
@@ -330,6 +342,7 @@ async function fetchFromFirestore(){
       title: x.title || '',
       body: x.body || '',
       effect: x.effect || '',
+      referenceUrl: safeHttpUrl(x.referenceUrl),
       beforeMin: (x.beforeMin!=null)? Number(x.beforeMin): null,
       afterMin:  (x.afterMin!=null)?  Number(x.afterMin):  null,
       difficulty: Number(x.difficulty)||3,
@@ -393,6 +406,7 @@ function renderCases(f){
       <div class="case-body">${c.body}</div>
       <div class="case-foot">
         ${c.effect?`<span class="tag teal">${c.effect}</span>`:''}
+        ${c.referenceUrl?`<a class="reference-link" href="${c.referenceUrl}" target="_blank" rel="noopener noreferrer">参考URLを開く ↗</a>`:''}
         ${saved!=null?`<span class="tag">${c.beforeMin}分 → ${c.afterMin}分（${saved}分短縮）</span>`:''}
         <button class="like ${isL?'on':''}" onclick="toggleLike('${c.id}')">♥ ${cnt}</button>
       </div></div>`;
