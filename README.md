@@ -10,7 +10,7 @@
 | ページ | URL | 用途 |
 |--------|-----|------|
 | **出欠LP** | https://exceed-ai-study.web.app | 勉強会の案内・出欠回答 |
-| **管理者ページ** | https://exceed-ai-study.web.app/admin.html | イベント内容の編集・欠席者確認（管理者のみ） |
+| **管理者ページ** | https://exceed-ai-study.web.app/admin.html | イベント内容の編集・実施日ごとの出欠／出席率管理（管理者のみ） |
 | **事例投稿フォーム** | https://exceed-ai-study.web.app/form.html | AI活用事例の投稿（Googleログイン） |
 | **活用ダッシュボード** | https://exceed-ai-study.web.app/dashboard.html | 事例・削減時間・ランキングの可視化 |
 
@@ -75,7 +75,7 @@ firebase login # tegawa@ych-exceed.com でログイン
 
 ## 👥 権限について
 
-- **イベント内容・欠席者の確認・編集** … 管理者ページ（admin.html）から画面上で操作できます。コードを触る必要はありません。
+- **イベント内容・出欠の確認・編集** … 管理者ページ（admin.html）から画面上で操作できます。実施日、出席／欠席、備考（体調不良等）を記録・修正できます。
 - **管理者の追加** … Firestoreの `aiStudy_settings/access` ドキュメントの `admins` 配列にGmailアドレスを追加します。
 - **コードの編集に参加したい場合** … このGitHubリポジトリのCollaboratorに招待します（Settings → Collaborators）。
 
@@ -83,7 +83,7 @@ firebase login # tegawa@ych-exceed.com でログイン
 
 ## 📊 主な機能
 
-- **出欠回答**：Googleログイン → ワンクリックで欠席回答。誰が欠席かを自動記録
+- **出欠管理**：Googleログイン → ワンクリックで欠席回答。管理者は実施日ごとの出席／欠席／備考を確定し、出席率を確認可能
 - **事例投稿**：AIツール・活用シーン・効果を投稿。氏名／部門はGmailから自動判定
 - **作業効率の可視化**：「導入前○分 → 導入後○分」から削減率・削減時間を自動計算
 - **ダッシュボード**：事例一覧・部門別削減時間・作業効率TOP5・投稿者ランキング

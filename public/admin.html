@@ -36,7 +36,7 @@
   .card .desc { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
 
   label { display:block; font-size: 12px; color: var(--muted); letter-spacing:.08em; margin: 14px 0 6px; }
-  input[type=text], input[type=datetime-local], textarea {
+  input[type=text], input[type=date], input[type=datetime-local], select, textarea {
     width: 100%; background: var(--bg); color: var(--text);
     border: 1px solid var(--line); border-radius: 10px; padding: 11px 14px;
     font-family: inherit; font-size: 14px;
@@ -77,6 +77,14 @@
     border:1px solid rgba(255,107,122,.4); border-radius:999px;
     font-size:12px; padding: 3px 14px; margin-left: 8px; font-weight:700;
   }
+  .attendance-summary { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin:18px 0; }
+  .attendance-metric { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:13px; }
+  .attendance-metric b { display:block; color:var(--teal); font:700 24px "Space Grotesk", sans-serif; line-height:1.1; }
+  .attendance-metric span { color:var(--muted); font-size:11px; }
+  .attendance-controls { display:flex; justify-content:space-between; align-items:end; gap:14px; flex-wrap:wrap; margin:20px 0 8px; }
+  .attendance-controls label { margin-top:0; }
+  .status-present { color:var(--teal); font-weight:700; } .status-absent { color:var(--absent); font-weight:700; }
+  @media (max-width: 640px) { .attendance-summary { grid-template-columns:1fr; } }
   .toast {
     position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
     background: var(--surface-2); border: 1px solid var(--teal); color: var(--teal);
@@ -159,13 +167,31 @@
       <button class="btn btn-primary" id="btnSaveAccess">権限設定を保存</button>
     </div>
 
-    <!-- 欠席者一覧 -->
+    <!-- 出欠管理 -->
     <div class="card">
-      <h2>欠席者一覧 <span class="tag">Responses</span><span class="count-pill" id="absentCount">0名</span></h2>
-      <p class="desc">「欠席致します。」と回答したメンバーの一覧です(リアルタイム更新)。</p>
+      <h2>出欠管理 <span class="tag">Attendance</span></h2>
+      <p class="desc">出席・欠席・備考を実施日ごとに記録します。未回答のメンバーも、ここから当日の結果を入力・修正できます。</p>
+      <div class="attendance-summary">
+        <div class="attendance-metric"><b id="attendanceRate">—</b><span>出席率（入力済み分）</span></div>
+        <div class="attendance-metric"><b id="attendanceRecorded">0 / 0</b><span>出欠入力数 / 対象メンバー数</span></div>
+        <div class="attendance-metric"><b id="attendanceUnanswered">0名</b><span>未入力メンバー</span></div>
+      </div>
+      <div class="grid2">
+        <div><label>実施日</label><input type="date" id="aDate"></div>
+        <div><label>氏名 <span style="letter-spacing:0;text-transform:none">（任意）</span></label><input type="text" id="aName" placeholder="例：山田 太郎"></div>
+        <div><label>メールアドレス <span style="letter-spacing:0;text-transform:none">（必須）</span></label><input type="text" id="aEmail" placeholder="taro@example.co.jp"></div>
+        <div><label>出欠</label><select id="aStatus"><option value="present">出席</option><option value="absent">欠席</option></select></div>
+      </div>
+      <label>備考 <span style="letter-spacing:0;text-transform:none">（体調不良・公休等）</span></label>
+      <textarea id="aNote" rows="2" placeholder="例：体調不良のため欠席" style="min-height:64px"></textarea>
+      <div style="margin-top:16px"><button class="btn btn-primary" id="btnSaveAttendance">出欠を保存</button><button class="btn btn-ghost" id="btnResetAttendance" type="button" style="margin-left:8px">入力をクリア</button></div>
+      <div class="attendance-controls">
+        <div><label>表示する実施日</label><select id="attendanceDateFilter"><option value="all">すべての実施日</option></select></div>
+        <span class="count-pill" id="absentCount">欠席 0名</span>
+      </div>
       <table>
-        <thead><tr><th>#</th><th>名前</th><th>メールアドレス</th><th>回答日時</th><th></th></tr></thead>
-        <tbody id="respBody"><tr><td colspan="5" style="color:var(--muted)">読み込み中…</td></tr></tbody>
+        <thead><tr><th>実施日</th><th>名前</th><th>メールアドレス</th><th>出欠</th><th>備考</th><th></th></tr></thead>
+        <tbody id="respBody"><tr><td colspan="6" style="color:var(--muted)">読み込み中…</td></tr></tbody>
       </table>
       <div style="margin-top:16px"><button class="btn btn-ghost" id="btnCsv">CSVをダウンロード</button></div>
     </div>
@@ -180,7 +206,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, deleteDoc, collection, onSnapshot, query, orderBy
+  getFirestore, doc, getDoc, setDoc, deleteDoc, collection, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
@@ -201,7 +227,8 @@ function toast(msg, isErr=false) {
 }
 
 /* ---------- 認証 / 管理者判定 ---------- */
-let unsubResponses = null;
+let unsubAttendance = null;
+let accessMembers = [];
 
 onAuthStateChanged(auth, async (user) => {
   $("userChip").hidden = !user;
@@ -213,7 +240,7 @@ onAuthStateChanged(auth, async (user) => {
     $("gate").hidden = false; $("panel").hidden = true;
     $("btnLogin").hidden = false; $("btnGateLogout").hidden = true;
     $("gateMsg").textContent = "管理権限のあるGoogleアカウントでログインしてください。";
-    if (unsubResponses) { unsubResponses(); unsubResponses = null; }
+    if (unsubAttendance) { unsubAttendance(); unsubAttendance = null; }
     return;
   }
   // 管理者判定: settings/access は管理者のみ読取可能なので、読めれば管理者
@@ -239,6 +266,7 @@ async function enterPanel(access) {
   // 権限
   $("fMembers").value = (access.members || []).join("\n");
   $("fAdmins").value  = (access.admins || []).join("\n");
+  accessMembers = [...new Set([...(access.members || []), ...(access.admins || [])].map(v => String(v).toLowerCase()))];
 
   // イベント
   const evSnap = await getDoc(doc(db, "aiStudy_settings", "event"));
@@ -253,7 +281,8 @@ async function enterPanel(access) {
   else $("fStartAt").value = "2026-07-17T18:00";
   renderAgendaEditor(Array.isArray(d.agenda) ? d.agenda : []);
 
-  watchResponses();
+  $("aDate").value = new Date().toISOString().slice(0, 10);
+  watchAttendance();
 }
 
 /* アジェンダ編集 */
@@ -313,59 +342,70 @@ $("btnSaveAccess").addEventListener("click", async () => {
     await setDoc(doc(db, "aiStudy_settings", "access"), { admins, members });
     $("fAdmins").value = admins.join("\n");
     $("fMembers").value = members.join("\n");
+    accessMembers = [...new Set([...members, ...admins])];
+    renderAttendance();
     toast("権限設定を保存しました");
   } catch (e) { toast("保存に失敗しました: " + e.message, true); }
   finally { $("btnSaveAccess").disabled = false; }
 });
 
-/* 欠席者一覧(リアルタイム) */
+/* 出欠管理（管理者が実施日ごとに確定する記録） */
 let latestRows = [];
-function watchResponses() {
-  if (unsubResponses) unsubResponses();
-  const q = query(collection(db, "aiStudy_responses"), orderBy("respondedAt", "desc"));
-  unsubResponses = onSnapshot(q, (snap) => {
-    latestRows = [];
-    snap.forEach(docu => {
-      const d = docu.data();
-      if (d.status === "absent") latestRows.push({ id: docu.id, ...d });
-    });
-    $("absentCount").textContent = latestRows.length + "名";
-    const body = $("respBody");
-    if (!latestRows.length) {
-      body.innerHTML = `<tr><td colspan="5" style="color:var(--muted)">欠席の回答はまだありません 🎉</td></tr>`;
-      return;
-    }
-    body.innerHTML = latestRows.map((r, i) => {
-      const dt = r.respondedAt?.toDate ? r.respondedAt.toDate().toLocaleString("ja-JP") : "—";
-      return `<tr>
-        <td class="latin">${i + 1}</td>
-        <td>${esc(r.name)}</td>
-        <td class="latin">${esc(r.email)}</td>
-        <td>${esc(dt)}</td>
-        <td><button class="btn-mini" data-del="${esc(r.id)}">削除</button></td>
-      </tr>`;
-    }).join("");
-    body.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
-      if (!confirm("この回答を削除しますか?")) return;
-      try { await deleteDoc(doc(db, "aiStudy_responses", b.dataset.del)); toast("回答を削除しました"); }
-      catch (e) { toast("削除に失敗しました: " + e.message, true); }
-    }));
-  }, (e) => {
-    $("respBody").innerHTML = `<tr><td colspan="5" style="color:var(--absent)">読込エラー: ${esc(e.message)}</td></tr>`;
-  });
+function attendanceDocId(date, email) { return encodeURIComponent(`${date}__${email.toLowerCase()}`); }
+function resetAttendanceForm() {
+  $("aDate").value = new Date().toISOString().slice(0, 10); $("aName").value = "";
+  $("aEmail").value = ""; $("aStatus").value = "present"; $("aNote").value = "";
 }
+function watchAttendance() {
+  if (unsubAttendance) unsubAttendance();
+  unsubAttendance = onSnapshot(collection(db, "aiStudy_attendance"), (snap) => {
+    latestRows = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+    refreshAttendanceDateFilter(); renderAttendance();
+  }, (e) => { $("respBody").innerHTML = `<tr><td colspan="6" style="color:var(--absent)">読込エラー: ${esc(e.message)}</td></tr>`; });
+}
+function refreshAttendanceDateFilter() {
+  const select = $("attendanceDateFilter"), value = select.value;
+  const dates = [...new Set(latestRows.map(r => r.date).filter(Boolean))].sort().reverse();
+  select.innerHTML = '<option value="all">すべての実施日</option>' + dates.map(d => `<option value="${esc(d)}">${esc(d)}</option>`).join("");
+  select.value = dates.includes(value) ? value : (dates[0] || "all");
+}
+function renderAttendance() {
+  const filter = $("attendanceDateFilter").value;
+  const rows = latestRows.filter(r => filter === "all" || r.date === filter).sort((a,b) => String(b.date).localeCompare(String(a.date)) || String(a.name).localeCompare(String(b.name)));
+  const scoped = filter === "all" ? latestRows : rows;
+  const present = scoped.filter(r => r.status === "present").length, absent = scoped.filter(r => r.status === "absent").length;
+  $("attendanceRate").textContent = (present + absent) ? Math.round(present / (present + absent) * 100) + "%" : "—";
+  $("attendanceRecorded").textContent = `${present + absent} / ${accessMembers.length}`;
+  const recordedEmails = new Set(scoped.map(r => r.email));
+  const missingMembers = filter === "all" ? [] : accessMembers.filter(email => !recordedEmails.has(email));
+  $("attendanceUnanswered").textContent = Math.max(0, accessMembers.length - (filter === "all" ? recordedEmails.size : scoped.length)) + "名";
+  $("absentCount").textContent = "欠席 " + absent + "名";
+  const body = $("respBody");
+  if (!rows.length && !missingMembers.length) { body.innerHTML = `<tr><td colspan="6" style="color:var(--muted)">出欠記録はまだありません。</td></tr>`; return; }
+  body.innerHTML = rows.map(r => `<tr><td class="latin">${esc(r.date)}</td><td>${esc(r.name || "—")}</td><td class="latin">${esc(r.email)}</td><td class="status-${r.status}">${r.status === "present" ? "出席" : "欠席"}</td><td>${esc(r.note || "—")}</td><td><button class="btn-mini" data-edit="${esc(r.id)}">編集</button> <button class="btn-mini" data-del="${esc(r.id)}">削除</button></td></tr>`).join("") + missingMembers.map(email => `<tr><td class="latin">${esc(filter)}</td><td>—</td><td class="latin">${esc(email)}</td><td style="color:var(--muted);font-weight:700">未入力</td><td>—</td><td><button class="btn-mini" data-add="${esc(email)}">入力</button></td></tr>`).join("");
+  body.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => { const r = latestRows.find(x => x.id === b.dataset.edit); if (!r) return; $("aDate").value=r.date; $("aName").value=r.name||""; $("aEmail").value=r.email||""; $("aStatus").value=r.status; $("aNote").value=r.note||""; window.scrollTo({top:document.getElementById("aDate").getBoundingClientRect().top + window.scrollY - 30, behavior:"smooth"}); }));
+  body.querySelectorAll("[data-add]").forEach(b => b.addEventListener("click", () => { $("aDate").value=filter; $("aName").value=""; $("aEmail").value=b.dataset.add; $("aStatus").value="present"; $("aNote").value=""; window.scrollTo({top:document.getElementById("aDate").getBoundingClientRect().top + window.scrollY - 30, behavior:"smooth"}); }));
+  body.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => { if (!confirm("この出欠記録を削除しますか?")) return; try { await deleteDoc(doc(db, "aiStudy_attendance", b.dataset.del)); toast("出欠記録を削除しました"); } catch(e) { toast("削除に失敗しました: " + e.message, true); } }));
+}
+$("attendanceDateFilter").addEventListener("change", renderAttendance);
+$("btnResetAttendance").addEventListener("click", resetAttendanceForm);
+$("btnSaveAttendance").addEventListener("click", async () => {
+  const date=$("aDate").value, email=$("aEmail").value.trim().toLowerCase(), name=$("aName").value.trim(), status=$("aStatus").value, note=$("aNote").value.trim();
+  if (!date || !email.includes("@")) { toast("実施日と正しいメールアドレスを入力してください", true); return; }
+  try { $("btnSaveAttendance").disabled=true; await setDoc(doc(db, "aiStudy_attendance", attendanceDocId(date,email)), { date, email, name, status, note, updatedAt:serverTimestamp() }); $("attendanceDateFilter").value=date; toast("出欠を保存しました"); resetAttendanceForm(); }
+  catch(e) { toast("保存に失敗しました: " + e.message, true); } finally { $("btnSaveAttendance").disabled=false; }
+});
 
 /* CSV */
 $("btnCsv").addEventListener("click", () => {
-  const header = "名前,メールアドレス,ステータス,回答日時\n";
+  const header = "実施日,名前,メールアドレス,出欠,備考\n";
   const lines = latestRows.map(r => {
-    const dt = r.respondedAt?.toDate ? r.respondedAt.toDate().toLocaleString("ja-JP") : "";
-    return [r.name, r.email, "欠席", dt].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",");
+    return [r.date, r.name, r.email, r.status === "present" ? "出席" : "欠席", r.note].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",");
   }).join("\n");
   const blob = new Blob(["\uFEFF" + header + lines], { type: "text/csv" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "absent_list.csv";
+  a.download = "attendance_list.csv";
   a.click();
   URL.revokeObjectURL(a.href);
 });
