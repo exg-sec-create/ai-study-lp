@@ -85,3 +85,4 @@ git push -u origin main
 | `aiStudy_settings/event` | タイトル・日時・場所・概要・アジェンダ・開始日時 | 全員 | 管理者 |
 | `aiStudy_settings/access` | `admins` / `members` のメール配列 | 管理者 | 管理者 |
 | `aiStudy_responses/{uid}` | 欠席回答(email / name / status / respondedAt) | 本人・管理者 | 本人(メンバーのみ) |
+| `aiStudy_cases/{caseId}` | AI活用事例（任意の`referenceUrl`を含む） | 全員 | 全員 |
