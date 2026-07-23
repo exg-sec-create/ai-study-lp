@@ -1,88 +1,98 @@
-# AI勉強会 出欠確認LP(exceed-secretary-system 同居版)
+# EXCEED GROUP AI活用システム
 
-社内AI勉強会(7/17 金 18:00–19:00)向けの、出欠回答フォーム付きランディングページです。
-既存Firebaseプロジェクト **exceed-secretary-system** に相乗りする前提で、
-既存データ・既存ルール・既存Hostingサイトを壊さない構成にしています。
+社内のAI活用を推進するためのWebシステム一式です。
+出欠確認・事例投稿・活用状況の可視化を、すべてこのリポジトリで管理しています。
 
-- **LP (`public/index.html`)** — イベント紹介 + カウントダウン + Googleログイン + 「欠席致します。」ワンボタン回答
-- **管理者ページ (`public/admin.html`)** — イベント編集 / 回答権・管理権限の管理 / 欠席者一覧(リアルタイム・CSV)
-- **Firestoreルール (`firestore.rules`)** — 編集は管理者のみ、回答は許可メンバーのみをサーバー側で強制
+---
 
-## 既存プロジェクトと衝突しないための設計
-- コレクション名は接頭辞付き: `aiStudy_settings` / `aiStudy_responses`
-- ルール内の関数名も `aiStudy〜` に統一(既存ルールとマージしても名前衝突しない)
-- Hostingは **マルチサイト(別サイト)** としてデプロイし、既存サイトを上書きしない
+## 🔗 公開ページ（リンク集）
 
-## セットアップ手順
+| ページ | URL | 用途 |
+|--------|-----|------|
+| **出欠LP** | https://exceed-ai-study.web.app | 勉強会の案内・出欠回答 |
+| **管理者ページ** | https://exceed-ai-study.web.app/admin.html | イベント内容の編集・欠席者確認（管理者のみ） |
+| **事例投稿フォーム** | https://exceed-ai-study.web.app/form.html | AI活用事例の投稿（Googleログイン） |
+| **活用ダッシュボード** | https://exceed-ai-study.web.app/dashboard.html | 事例・削減時間・ランキングの可視化 |
 
-### 1. Firebase設定値の取得
-1. https://console.firebase.google.com → **exceed-secretary-system** を開く
-2. **Authentication → ログイン方法 → Google** が有効になっているか確認(未設定なら有効化)
-3. プロジェクトの設定 → マイアプリ → 既存のウェブアプリ設定(なければウェブアプリを追加)から
-   `apiKey` / `messagingSenderId` / `appId` をコピーし、`public/firebase-config.js` の残り3項目を埋める
-   (`projectId` などは設定済みです)
+---
 
-### 2. 最初の管理者を登録(初回のみ・重要)
-Firestoreコンソールで手動でドキュメントを1件作成します。
+## 🏗 システム構成
 
-- コレクション: `aiStudy_settings` / ドキュメントID: `access`
-- フィールド:
-  - `admins`(配列): あなたのGmailアドレス(小文字)
-  - `members`(配列): 回答権を持たせたいメンバーのGmailアドレス
+```
+コード管理   → GitHub（このリポジトリ）
+データ保管   → Firebase / Firestore（exceed-secretary-system）
+公開         → Firebase Hosting（マルチサイト: exceed-ai-study）
+認証         → Google ログイン（社内アカウント）
+```
 
-以降のメンバー追加・削除は管理者ページから行えます。
+- 事例・いいね・社員マスタはすべて Firestore の `aiStudy_` コレクションに保存
+- 既存の秘書システムと同じFirebaseプロジェクトbut接頭辞で分離しているため衝突しない
 
-### 3. Firestoreルールの反映(⚠ 上書き注意)
-**exceed-secretary-system に既存のルールがある場合**、
-`firebase deploy --only firestore:rules` は既存ルールを**全て置き換え**ます。
-必ず Firebaseコンソール → Firestore → ルール を開き、`firestore.rules` 内の
-「AI勉強会」ブロック(ヘルパー関数 + match 3つ)を既存ルールの
-`match /databases/{database}/documents { ... }` の中に**コピペでマージ**して公開してください。
+---
 
-既存ルールが無い(デフォルトのまま)なら、そのまま `firebase deploy --only firestore:rules` でOKです。
+## 📁 ファイル構成
 
-### 4. Hostingデプロイ(既存サイトを壊さない別サイト方式)
+```
+ai-study-lp/
+├── public/
+│   ├── index.html          出欠LP
+│   ├── admin.html          管理者ページ
+│   ├── form.html           事例投稿フォーム
+│   ├── dashboard.html      活用ダッシュボード
+│   └── firebase-config.js  Firebase接続設定
+├── firestore.rules         Firestoreセキュリティルール
+├── firebase.json           Firebase設定
+└── README.md               このファイル
+```
+
+---
+
+## 🔄 更新のしかた（開発者向け）
+
+ファイルを編集したら、以下を順番に実行して公開に反映します。
+
 ```bash
-npm install -g firebase-tools
-firebase login
-cd ai-study-lp
-
-# 新しいHostingサイトを作成(サイトIDは全世界で一意。例: exceed-ai-study)
-firebase hosting:sites:create exceed-ai-study
-
-# このリポジトリの "ai-study" ターゲットを作成したサイトに紐付け
-firebase target:apply hosting ai-study exceed-ai-study
-
-# デプロイ(Hostingのみ)
+cd ~/Downloads/ai-study-lp
+git add -A
+git commit -m "変更内容のメモ"
+git pull --no-rebase origin main
+git push
 firebase deploy --only hosting:ai-study
 ```
-公開URL: `https://exceed-ai-study.web.app` — これが社内共有用のLPです。
 
-※ 既存プロジェクトでHostingを一切使っていない場合は、マルチサイトにせず
-`firebase.json` の hosting をシンプルな単一設定に戻して `firebase deploy --only hosting` でも構いません。
+- `git push` … GitHubにコードを記録（履歴が残る）
+- `firebase deploy` … 公開サイトに反映
 
-### 5. GitHubでの管理(任意)
+### 前提ツール
+
 ```bash
-git init && git add -A && git commit -m "AI study session LP"
-git remote add origin git@github.com:YOUR_ORG/ai-study-lp.git
-git push -u origin main
+node -v        # v18以上
+firebase --version
+firebase login # tegawa@ych-exceed.com でログイン
 ```
-プッシュ時の自動デプロイは `firebase init hosting:github` でGitHub Actionsを自動生成できます。
 
-## 運用メモ
-- **社内ドメイン限定**: `index.html` / `admin.html` の
-  `provider.setCustomParameters({ hd: "example.co.jp" })` のコメントを外して自社ドメインを指定。
-  確実な制限は `members` リスト(ルールで強制)で行われます。
-- **回答の仕様**: 参加者は回答不要。欠席者のみログインしてボタンを押すと
-  `aiStudy_responses/{uid}` に `{ email, name, status: "absent", respondedAt }` が保存。本人取り消し可。
-- **管理者判定**: `aiStudy_settings/access` の `admins` に含まれるメールのみ、
-  管理者ページ・イベント編集・権限編集・全回答の閲覧/削除が可能(ルールで強制)。
-- **日付変更**: 管理者ページの「開始日時」を変えるとカウントダウンも自動追従。
+---
 
-## Firestoreデータ構造
-| パス | 内容 | 読み | 書き |
-|---|---|---|---|
-| `aiStudy_settings/event` | タイトル・日時・場所・概要・アジェンダ・開始日時 | 全員 | 管理者 |
-| `aiStudy_settings/access` | `admins` / `members` のメール配列 | 管理者 | 管理者 |
-| `aiStudy_responses/{uid}` | 欠席回答(email / name / status / respondedAt) | 本人・管理者 | 本人(メンバーのみ) |
-| `aiStudy_cases/{caseId}` | AI活用事例（任意の`referenceUrl`を含む） | 全員 | 全員 |
+## 👥 権限について
+
+- **イベント内容・欠席者の確認・編集** … 管理者ページ（admin.html）から画面上で操作できます。コードを触る必要はありません。
+- **管理者の追加** … Firestoreの `aiStudy_settings/access` ドキュメントの `admins` 配列にGmailアドレスを追加します。
+- **コードの編集に参加したい場合** … このGitHubリポジトリのCollaboratorに招待します（Settings → Collaborators）。
+
+---
+
+## 📊 主な機能
+
+- **出欠回答**：Googleログイン → ワンクリックで欠席回答。誰が欠席かを自動記録
+- **事例投稿**：AIツール・活用シーン・効果を投稿。氏名／部門はGmailから自動判定
+- **作業効率の可視化**：「導入前○分 → 導入後○分」から削減率・削減時間を自動計算
+- **ダッシュボード**：事例一覧・部門別削減時間・作業効率TOP5・投稿者ランキング
+- **いいね機能**：事例に「いいね」でき、リアルタイムで全員に反映
+
+---
+
+## 📞 メンテナンス担当
+
+社長室（tegawa@ych-exceed.com）
+
+不明点や不具合があれば、上記まで連絡してください。
