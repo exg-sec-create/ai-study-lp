@@ -9,10 +9,17 @@
 
 | ページ | URL | 用途 |
 |--------|-----|------|
+ codex
 | **出欠LP** | https://exg-sec-create.github.io/ai-study-lp/ | 勉強会の案内・出欠回答 |
 | **管理者ページ** | https://exg-sec-create.github.io/ai-study-lp/admin.html | イベント内容の編集・実施日ごとの出欠／出席率管理（管理者のみ） |
 | **事例投稿フォーム** | https://exg-sec-create.github.io/ai-study-lp/form.html | AI活用事例の投稿（Googleログイン） |
 | **活用ダッシュボード** | https://exg-sec-create.github.io/ai-study-lp/dashboard.html | 事例・削減時間・ランキングの可視化 |
+
+| **出欠LP** | https://exceed-ai-study.web.app | 勉強会の案内・出欠回答 |
+| **管理者ページ** | https://exceed-ai-study.web.app/admin.html | イベント内容の編集・実施日ごとの出欠／出席率管理（管理者のみ） |
+| **事例投稿フォーム** | https://exceed-ai-study.web.app/form.html | AI活用事例の投稿（Googleログイン） |
+| **活用ダッシュボード** | https://exceed-ai-study.web.app/dashboard.html | 事例・削減時間・ランキングの可視化 |
+main
 
 ---
 
