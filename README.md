@@ -9,10 +9,17 @@
 
 | ページ | URL | 用途 |
 |--------|-----|------|
+ codex
+| **出欠LP** | https://exg-sec-create.github.io/ai-study-lp/ | 勉強会の案内・出欠回答 |
+| **管理者ページ** | https://exg-sec-create.github.io/ai-study-lp/admin.html | イベント内容の編集・実施日ごとの出欠／出席率管理（管理者のみ） |
+| **事例投稿フォーム** | https://exg-sec-create.github.io/ai-study-lp/form.html | AI活用事例の投稿（Googleログイン） |
+| **活用ダッシュボード** | https://exg-sec-create.github.io/ai-study-lp/dashboard.html | 事例・削減時間・ランキングの可視化 |
+
 | **出欠LP** | https://exceed-ai-study.web.app | 勉強会の案内・出欠回答 |
 | **管理者ページ** | https://exceed-ai-study.web.app/admin.html | イベント内容の編集・実施日ごとの出欠／出席率管理（管理者のみ） |
 | **事例投稿フォーム** | https://exceed-ai-study.web.app/form.html | AI活用事例の投稿（Googleログイン） |
 | **活用ダッシュボード** | https://exceed-ai-study.web.app/dashboard.html | 事例・削減時間・ランキングの可視化 |
+main
 
 ---
 
@@ -21,7 +28,7 @@
 ```
 コード管理   → GitHub（このリポジトリ）
 データ保管   → Firebase / Firestore（exceed-secretary-system）
-公開         → Firebase Hosting（マルチサイト: exceed-ai-study）
+公開         → GitHub Pages（exg-sec-create.github.io/ai-study-lp）
 認証         → Google ログイン（社内アカウント）
 ```
 
@@ -55,20 +62,16 @@ ai-study-lp/
 cd ~/Downloads/ai-study-lp
 git add -A
 git commit -m "変更内容のメモ"
-git pull --no-rebase origin main
 git push
-firebase deploy --only hosting:ai-study
 ```
 
 - `git push` … GitHubにコードを記録（履歴が残る）
-- `firebase deploy` … 公開サイトに反映
+- GitHub Pagesの公開設定により、対象ブランチへのpushが公開サイトに反映されます。
 
 ### 前提ツール
 
 ```bash
 node -v        # v18以上
-firebase --version
-firebase login # tegawa@ych-exceed.com でログイン
 ```
 
 ---
