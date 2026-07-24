@@ -29,7 +29,10 @@
   .eyebrow { font-size:11px; letter-spacing:.28em; color:var(--violet2); font-weight:700; margin-bottom:10px; }
   .hero h1 { font-family:var(--serif); font-size:34px; font-weight:600; color:#fff; letter-spacing:.02em; line-height:1.25; }
   .hero p { color:#B8BEE8; font-size:13px; margin-top:8px; }
-  .updated { position:absolute; top:0; right:0; font-size:11px; color:#8A90C0; }
+  .hero-nav { position:absolute; top:0; right:0; display:flex; gap:8px; align-items:center; }
+  .updated { font-size:11px; color:#8A90C0; }
+  .hero-link { color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.28); border-radius:999px; padding:8px 13px; font-size:12px; font-weight:700; white-space:nowrap; }
+  .hero-link:hover { background:rgba(255,255,255,.10); }
 
   /* Hero stat strip */
   .hero-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:24px;
@@ -144,7 +147,7 @@
 <body>
 <div class="hero">
   <div class="hero-in">
-    <div class="updated" id="updated"></div>
+    <div class="hero-nav"><span class="updated" id="updated"></span><a class="hero-link" href="./form.html">事例を投稿する →</a></div>
     <div class="eyebrow">EXCEED GROUP &nbsp;/&nbsp; AI ACTIVATION</div>
     <h1>AI活用ダッシュボード</h1>
     <p>社員の「AIでこう変わった」を、時間で可視化する</p>

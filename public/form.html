@@ -25,6 +25,10 @@
   .eyebrow { font-size:11px; letter-spacing:.28em; color:var(--violet2); font-weight:700; margin-bottom:10px; }
   .hero h1 { font-family:var(--serif); font-size:28px; font-weight:600; color:#fff; letter-spacing:.02em; line-height:1.3; }
   .hero p { color:#B8BEE8; font-size:13px; margin-top:8px; line-height:1.6; }
+  .hero-top { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
+  .hero-top .eyebrow { margin-bottom:0; }
+  .hero-link { color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.28); border-radius:999px; padding:8px 13px; font-size:12px; font-weight:700; white-space:nowrap; }
+  .hero-link:hover { background:rgba(255,255,255,.10); }
 
   /* login gate */
   .gate { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:32px 28px; text-align:center; }
@@ -84,7 +88,7 @@
 <body>
 <div class="hero">
   <div class="hero-in">
-    <div class="eyebrow">EXCEED GROUP &nbsp;/&nbsp; AI ACTIVATION</div>
+    <div class="hero-top"><div class="eyebrow">EXCEED GROUP &nbsp;/&nbsp; AI ACTIVATION</div><a class="hero-link" href="./dashboard.html">ダッシュボードを見る →</a></div>
     <h1>AI活用事例を投稿する</h1>
     <p>あなたの「AIでこう変わった」を共有してください。<br>ダッシュボードに反映され、みんなの参考になります。</p>
   </div>
@@ -186,7 +190,7 @@
     <div class="ic">🎉</div>
     <h2>投稿ありがとうございました！</h2>
     <p>あなたの事例がダッシュボードに反映されました。<br>ぜひ他のメンバーの事例も見てみてください。</p>
-    <a href="/dashboard.html" class="lnk p">ダッシュボードを見る</a>
+    <a href="./dashboard.html" class="lnk p">ダッシュボードを見る</a>
     <a href="#" class="lnk s" id="again">もう1件投稿する</a>
   </div>
 
