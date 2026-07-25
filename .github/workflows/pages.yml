@@ -32,6 +32,11 @@ jobs:
       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-        if: ${{ env.FIREBASE_TOKEN != '' }}
-      - run: npx --yes firebase-tools@14.11.1 deploy --only firestore:rules --project exceed-secretary-system --non-interactive --token "$FIREBASE_TOKEN"
-        if: ${{ env.FIREBASE_TOKEN != '' }}
+      - name: Firebase credentials check
+        run: |
+          if [ -z "$FIREBASE_TOKEN" ]; then
+            echo "::error::FIREBASE_TOKEN is not configured. Firestore rules were not deployed, so board posts are rejected."
+            exit 1
+          fi
+      - name: Deploy Firestore rules
+        run: npx --yes firebase-tools@14.11.1 deploy --only firestore:rules --project exceed-secretary-system --non-interactive --token "$FIREBASE_TOKEN"

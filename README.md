@@ -60,7 +60,7 @@ git push
 
 - `git push` … GitHubにコードを記録（履歴が残る）
 - GitHub Pagesの公開設定により、対象ブランチへのpushが公開サイトに反映されます。
-- FirestoreルールもGitHub Actionsから反映されます。リポジトリのActions secretに、`firebase login:ci`で発行した`FIREBASE_TOKEN`を登録してください（未登録の場合はルールのデプロイだけがスキップされます）。
+- FirestoreルールもGitHub Actionsから反映されます。リポジトリのActions secretに、`firebase login:ci`で発行した`FIREBASE_TOKEN`を登録してください。未登録の場合は、ページだけ公開されて投稿が失敗する状態を防ぐためデプロイをエラーにします。
 
 ### 前提ツール
 
