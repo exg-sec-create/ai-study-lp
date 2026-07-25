@@ -24,3 +24,14 @@ jobs:
           path: ./public
       - id: deployment
         uses: actions/deploy-pages@v4
+  deploy-firestore-rules:
+    # 出欠管理などで使うコレクションのルールも、ページと同時に反映する。
+    # FIREBASE_TOKEN は `firebase login:ci` で発行し、Repository secret に登録する。
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        if: ${{ env.FIREBASE_TOKEN != '' }}
+      - run: npx --yes firebase-tools@14.11.1 deploy --only firestore:rules --project exceed-secretary-system --non-interactive --token "$FIREBASE_TOKEN"
+        if: ${{ env.FIREBASE_TOKEN != '' }}
