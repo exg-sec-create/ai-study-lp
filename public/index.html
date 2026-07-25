@@ -421,7 +421,23 @@ $("btnLogin").addEventListener("click", async () => {
   }
 });
 
-$("btnLogout").addEventListener("click", () => signOut(auth));
+$("btnLogout").addEventListener("click", async () => {
+  const button = $("btnLogout");
+  button.disabled = true;
+  try {
+    await signOut(auth);
+    // onAuthStateChanged が画面を切り替えるが、明示的にも状態を消して
+    // 通信や描画のタイミングにかかわらずログアウト済みであることを示す。
+    currentUser = null;
+    $("viewSignedOut").hidden = false;
+    $("viewSignedIn").hidden = true;
+  } catch (e) {
+    console.error(e);
+    showStatus("err", "ログアウトに失敗しました。時間をおいて再度お試しください。");
+  } finally {
+    button.disabled = false;
+  }
+});
 
 $("btnAbsent").addEventListener("click", async () => {
   if (!currentUser) return;
