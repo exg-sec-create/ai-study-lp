@@ -170,11 +170,11 @@
     <!-- 出欠管理 -->
     <div class="card">
       <h2>出欠管理 <span class="tag">Attendance</span></h2>
-      <p class="desc">出席・欠席・備考を実施日ごとに記録します。未回答のメンバーも、ここから当日の結果を入力・修正できます。</p>
+      <p class="desc">欠席者のみ回答する運用です。回答のない対象メンバーは出席として、実施日ごとの出席率を自動算出します。</p>
       <div class="attendance-summary">
-        <div class="attendance-metric"><b id="attendanceRate">—</b><span>出席率（入力済み分）</span></div>
-        <div class="attendance-metric"><b id="attendanceRecorded">0 / 0</b><span>出欠入力数 / 対象メンバー数</span></div>
-        <div class="attendance-metric"><b id="attendanceUnanswered">0名</b><span>未入力メンバー</span></div>
+        <div class="attendance-metric"><b id="attendanceRate">—</b><span>出席率（欠席回答から算出）</span></div>
+        <div class="attendance-metric"><b id="attendanceRecorded">0 / 0</b><span>出席者数 / 対象メンバー数</span></div>
+        <div class="attendance-metric"><b id="attendanceUnanswered">0名</b><span>欠席回答者</span></div>
       </div>
       <div class="grid2">
         <div><label>実施日</label><input type="date" id="aDate"></div>
@@ -402,16 +402,18 @@ function renderAttendance() {
   const filter = $("attendanceDateFilter").value;
   const rows = latestRows.filter(r => filter === "all" || r.date === filter).sort((a,b) => String(b.date).localeCompare(String(a.date)) || String(a.name).localeCompare(String(b.name)));
   const scoped = filter === "all" ? latestRows : rows;
-  const present = scoped.filter(r => r.status === "present").length, absent = scoped.filter(r => r.status === "absent").length;
-  $("attendanceRate").textContent = (present + absent) ? Math.round(present / (present + absent) * 100) + "%" : "—";
-  $("attendanceRecorded").textContent = `${present + absent} / ${accessMembers.length}`;
+  const absentEmails = new Set(scoped.filter(r => r.status === "absent").map(r => String(r.email || "").toLowerCase()));
+  const absent = accessMembers.filter(email => absentEmails.has(email)).length;
+  const present = Math.max(0, accessMembers.length - absent);
+  $("attendanceRate").textContent = accessMembers.length ? Math.round(present / accessMembers.length * 100) + "%" : "—";
+  $("attendanceRecorded").textContent = `${present} / ${accessMembers.length}`;
   const recordedEmails = new Set(scoped.map(r => r.email));
   const missingMembers = filter === "all" ? [] : accessMembers.filter(email => !recordedEmails.has(email));
-  $("attendanceUnanswered").textContent = Math.max(0, accessMembers.length - (filter === "all" ? recordedEmails.size : scoped.length)) + "名";
+  $("attendanceUnanswered").textContent = absent + "名";
   $("absentCount").textContent = "欠席 " + absent + "名";
   const body = $("respBody");
   if (!rows.length && !missingMembers.length) { body.innerHTML = `<tr><td colspan="6" style="color:var(--muted)">出欠記録はまだありません。</td></tr>`; return; }
-  body.innerHTML = rows.map(r => `<tr><td class="latin">${esc(r.date)}</td><td>${esc(r.name || "—")}</td><td class="latin">${esc(r.email)}</td><td class="status-${r.status}">${r.status === "present" ? "出席" : "欠席"}</td><td>${esc(r.note || "—")}</td><td><button class="btn-mini" data-edit="${esc(r.id)}">編集</button> <button class="btn-mini" data-del="${esc(r.id)}">削除</button></td></tr>`).join("") + missingMembers.map(email => `<tr><td class="latin">${esc(filter)}</td><td>—</td><td class="latin">${esc(email)}</td><td style="color:var(--muted);font-weight:700">未入力</td><td>—</td><td><button class="btn-mini" data-add="${esc(email)}">入力</button></td></tr>`).join("");
+  body.innerHTML = rows.map(r => `<tr><td class="latin">${esc(r.date)}</td><td>${esc(r.name || "—")}</td><td class="latin">${esc(r.email)}</td><td class="status-${r.status}">${r.status === "present" ? "出席" : "欠席"}</td><td>${esc(r.note || "—")}</td><td><button class="btn-mini" data-edit="${esc(r.id)}">編集</button> <button class="btn-mini" data-del="${esc(r.id)}">削除</button></td></tr>`).join("") + missingMembers.map(email => `<tr><td class="latin">${esc(filter)}</td><td>—</td><td class="latin">${esc(email)}</td><td class="status-present">出席（回答不要）</td><td>—</td><td><button class="btn-mini" data-add="${esc(email)}">修正</button></td></tr>`).join("");
   body.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => { const r = latestRows.find(x => x.id === b.dataset.edit); if (!r) return; $("aDate").value=r.date; $("aName").value=r.name||""; $("aEmail").value=r.email||""; $("aStatus").value=r.status; $("aNote").value=r.note||""; window.scrollTo({top:document.getElementById("aDate").getBoundingClientRect().top + window.scrollY - 30, behavior:"smooth"}); }));
   body.querySelectorAll("[data-add]").forEach(b => b.addEventListener("click", () => { $("aDate").value=filter; $("aName").value=""; $("aEmail").value=b.dataset.add; $("aStatus").value="present"; $("aNote").value=""; window.scrollTo({top:document.getElementById("aDate").getBoundingClientRect().top + window.scrollY - 30, behavior:"smooth"}); }));
   body.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => { if (!confirm("この出欠記録を削除しますか?")) return; try { await deleteDoc(doc(db, "aiStudy_attendance", b.dataset.del)); await saveEmbeddedAttendance(b.dataset.del, null); toast("出欠記録を削除しました"); } catch(e) { if (e.code === "permission-denied") { try { await saveEmbeddedAttendance(b.dataset.del, null); toast("出欠記録を削除しました"); } catch(fallbackError) { toast("削除に失敗しました: " + fallbackError.message, true); } } else toast("削除に失敗しました: " + e.message, true); } }));
