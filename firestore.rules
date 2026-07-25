@@ -32,6 +32,27 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    // --- AIアイデア掲示板（ログイン不要で閲覧・投稿・返信可） ---
+    match /aiStudy_boardPosts/{postId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['type','name','title','body','createdAt'])
+        && request.resource.data.type in ['question', 'idea', 'wish']
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 30
+        && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 100
+        && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 1000;
+      allow update, delete: if false;
+    }
+
+    match /aiStudy_boardReplies/{replyId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['postId','name','body','createdAt'])
+        && request.resource.data.postId is string
+        && exists(/databases/$(database)/documents/aiStudy_boardPosts/$(request.resource.data.postId))
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 30
+        && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 600;
+      allow update, delete: if false;
+    }
+
     // ============================================================
     // exceed-secretary-system 統合ルール(2026-07 更新)
     //
