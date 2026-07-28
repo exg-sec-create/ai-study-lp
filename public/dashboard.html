@@ -136,6 +136,9 @@
     margin-bottom:18px; text-align:center; font-weight:600; }
 
   @media(max-width:720px){
+    .hero { padding-top:24px; }
+    .hero-nav { position:relative; flex-wrap:wrap; margin-bottom:22px; }
+    .updated { flex-basis:100%; }
     .hero-stats{grid-template-columns:1fr 1fr;}
     .hstat{border-bottom:1px solid rgba(255,255,255,.08);}
     .grid2{grid-template-columns:1fr;}
@@ -147,7 +150,7 @@
 <body>
 <div class="hero">
   <div class="hero-in">
-    <div class="hero-nav"><span class="updated" id="updated"></span><a class="hero-link" href="./board.html">アイデア掲示板</a><a class="hero-link" href="./form.html">事例を投稿する →</a></div>
+    <nav class="hero-nav" aria-label="ページナビゲーション"><span class="updated" id="updated"></span><a class="hero-link" href="./index.html">AI勉強会</a><a class="hero-link" href="./board.html">アイデア掲示板</a><a class="hero-link" href="./form.html">事例を投稿する →</a></nav>
     <div class="eyebrow">EXCEED GROUP &nbsp;/&nbsp; AI ACTIVATION</div>
     <h1>AI活用ダッシュボード</h1>
     <p>社員の「AIでこう変わった」を、時間で可視化する</p>

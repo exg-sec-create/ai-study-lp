@@ -27,6 +27,7 @@
   .hero p { color:#B8BEE8; font-size:13px; margin-top:8px; line-height:1.6; }
   .hero-top { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
   .hero-top .eyebrow { margin-bottom:0; }
+  .hero-nav { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
   .hero-link { color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.28); border-radius:999px; padding:8px 13px; font-size:12px; font-weight:700; white-space:nowrap; }
   .hero-link:hover { background:rgba(255,255,255,.10); }
 
@@ -83,12 +84,17 @@
   .done .lnk.s { background:#EEF0F6; color:var(--t1); }
   .hidden { display:none !important; }
   .err { color:var(--coral); font-size:12px; margin-top:6px; }
+  @media(max-width:600px) {
+    .hero { padding:24px 20px 30px; }
+    .hero-top { align-items:flex-start; flex-direction:column; }
+    .hero-nav { justify-content:flex-start; }
+  }
 </style>
 </head>
 <body>
 <div class="hero">
   <div class="hero-in">
-    <div class="hero-top"><div class="eyebrow">EXCEED GROUP &nbsp;/&nbsp; AI ACTIVATION</div><a class="hero-link" href="./dashboard.html">ダッシュボードを見る →</a></div>
+    <div class="hero-top"><div class="eyebrow">EXCEED GROUP &nbsp;/&nbsp; AI ACTIVATION</div><nav class="hero-nav" aria-label="ページナビゲーション"><a class="hero-link" href="./index.html">AI勉強会</a><a class="hero-link" href="./board.html">アイデア掲示板</a><a class="hero-link" href="./dashboard.html">ダッシュボード →</a></nav></div>
     <h1>AI活用事例を投稿する</h1>
     <p>あなたの「AIでこう変わった」を共有してください。<br>ダッシュボードに反映され、みんなの参考になります。</p>
   </div>
