@@ -331,6 +331,7 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 const provider = new GoogleAuthProvider();
+let currentEventDate = "";
 // 社内ドメインに絞る場合はコメントを外してドメインを指定
 // provider.setCustomParameters({ hd: "example.co.jp" });
 
@@ -353,6 +354,9 @@ async function loadEvent() {
     $("eventTime").textContent  = d.timeLabel || "18:00 – 19:00";
     $("eventPlace").textContent = d.place || "本社 大会議室 / オンライン";
     if (d.eyebrow) $("heroEyebrow").textContent = d.eyebrow;
+    // 回答をどの開催回に対するものか管理画面で判別できるように保持する。
+    // startAt は管理画面から ISO 形式（日本時間）で保存される。
+    currentEventDate = typeof d.startAt === "string" ? d.startAt.slice(0, 10) : "";
 
     const agenda = Array.isArray(d.agenda) && d.agenda.length ? d.agenda : [
       { time: "18:00", title: "オープニング", desc: "本日の趣旨とゴール共有" },
@@ -447,6 +451,7 @@ $("btnAbsent").addEventListener("click", async () => {
       email: currentUser.email,
       name: currentUser.displayName || "",
       status: "absent",
+      eventDate: currentEventDate,
       respondedAt: serverTimestamp(),
     });
     showStatus("absent", "回答を受け付けました:「欠席致します。」— ご回答ありがとうございました。");

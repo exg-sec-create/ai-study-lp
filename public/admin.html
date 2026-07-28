@@ -353,10 +353,17 @@ $("btnSaveAccess").addEventListener("click", async () => {
 let latestRows = [];
 let collectionRows = [];
 let embeddedRows = [];
+let responseRows = [];
+let currentEventDate = "";
 function attendanceDocId(date, email) { return encodeURIComponent(`${date}__${email.toLowerCase()}`); }
 function combineAttendanceRows() {
-  const rows = new Map(embeddedRows.map(row => [row.id, row]));
-  collectionRows.forEach(row => rows.set(row.id, row));
+  // LPの欠席回答も同じ一覧へ統合する。管理者が確定した台帳レコードが
+  // ある場合は、同じ開催日・メールの回答より台帳側を優先する。
+  const key = row => `${row.date}__${String(row.email || "").toLowerCase()}`;
+  const resolvedResponses = responseRows.map(row => ({ ...row, date: row.eventDate || currentEventDate }));
+  const rows = new Map(resolvedResponses.map(row => [key(row), row]));
+  embeddedRows.forEach(row => rows.set(key(row), row));
+  collectionRows.forEach(row => rows.set(key(row), row));
   latestRows = [...rows.values()];
   refreshAttendanceDateFilter(); renderAttendance();
 }
@@ -377,11 +384,28 @@ function resetAttendanceForm() {
 function watchAttendance() {
   if (unsubAttendance) unsubAttendance();
   const unsubEvent = onSnapshot(doc(db, "aiStudy_settings", "event"), snap => {
-    const records = snap.data()?.attendanceRecords || {};
+    const event = snap.data() || {};
+    currentEventDate = typeof event.startAt === "string" ? event.startAt.slice(0, 10) : "";
+    const records = event.attendanceRecords || {};
     embeddedRows = Object.entries(records).map(([id, row]) => ({ id, ...row }));
     combineAttendanceRows();
   });
-  unsubAttendance = onSnapshot(collection(db, "aiStudy_attendance"), (snap) => {
+  const unsubResponses = onSnapshot(collection(db, "aiStudy_responses"), (snap) => {
+    responseRows = snap.docs.map(d => {
+      const data = d.data();
+      return {
+        id: d.id,
+        source: "response",
+        eventDate: data.eventDate || "",
+        email: data.email || "",
+        name: data.name || "",
+        status: "absent",
+        note: "LPからの欠席回答",
+      };
+    });
+    combineAttendanceRows();
+  });
+  const unsubCollection = onSnapshot(collection(db, "aiStudy_attendance"), (snap) => {
     collectionRows = snap.docs.map(d => ({ id:d.id, ...d.data() }));
     combineAttendanceRows();
   }, (e) => {
@@ -389,8 +413,7 @@ function watchAttendance() {
     // 互換ストレージを使って出欠管理を止めない。
     if (e.code !== "permission-denied") $("respBody").innerHTML = `<tr><td colspan="6" style="color:var(--absent)">読込エラー: ${esc(e.message)}</td></tr>`;
   });
-  const unsubCollection = unsubAttendance;
-  unsubAttendance = () => { unsubCollection(); unsubEvent(); };
+  unsubAttendance = () => { unsubCollection(); unsubResponses(); unsubEvent(); };
 }
 function refreshAttendanceDateFilter() {
   const select = $("attendanceDateFilter"), value = select.value;
@@ -416,7 +439,7 @@ function renderAttendance() {
   body.innerHTML = rows.map(r => `<tr><td class="latin">${esc(r.date)}</td><td>${esc(r.name || "—")}</td><td class="latin">${esc(r.email)}</td><td class="status-${r.status}">${r.status === "present" ? "出席" : "欠席"}</td><td>${esc(r.note || "—")}</td><td><button class="btn-mini" data-edit="${esc(r.id)}">編集</button> <button class="btn-mini" data-del="${esc(r.id)}">削除</button></td></tr>`).join("") + missingMembers.map(email => `<tr><td class="latin">${esc(filter)}</td><td>—</td><td class="latin">${esc(email)}</td><td class="status-present">出席（回答不要）</td><td>—</td><td><button class="btn-mini" data-add="${esc(email)}">修正</button></td></tr>`).join("");
   body.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => { const r = latestRows.find(x => x.id === b.dataset.edit); if (!r) return; $("aDate").value=r.date; $("aName").value=r.name||""; $("aEmail").value=r.email||""; $("aStatus").value=r.status; $("aNote").value=r.note||""; window.scrollTo({top:document.getElementById("aDate").getBoundingClientRect().top + window.scrollY - 30, behavior:"smooth"}); }));
   body.querySelectorAll("[data-add]").forEach(b => b.addEventListener("click", () => { $("aDate").value=filter; $("aName").value=""; $("aEmail").value=b.dataset.add; $("aStatus").value="present"; $("aNote").value=""; window.scrollTo({top:document.getElementById("aDate").getBoundingClientRect().top + window.scrollY - 30, behavior:"smooth"}); }));
-  body.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => { if (!confirm("この出欠記録を削除しますか?")) return; try { await deleteDoc(doc(db, "aiStudy_attendance", b.dataset.del)); await saveEmbeddedAttendance(b.dataset.del, null); toast("出欠記録を削除しました"); } catch(e) { if (e.code === "permission-denied") { try { await saveEmbeddedAttendance(b.dataset.del, null); toast("出欠記録を削除しました"); } catch(fallbackError) { toast("削除に失敗しました: " + fallbackError.message, true); } } else toast("削除に失敗しました: " + e.message, true); } }));
+  body.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => { if (!confirm("この出欠記録を削除しますか?")) return; const row = latestRows.find(r => r.id === b.dataset.del); try { if (row?.source === "response") { await deleteDoc(doc(db, "aiStudy_responses", b.dataset.del)); } else { await deleteDoc(doc(db, "aiStudy_attendance", b.dataset.del)); await saveEmbeddedAttendance(b.dataset.del, null); } toast("出欠記録を削除しました"); } catch(e) { if (row?.source !== "response" && e.code === "permission-denied") { try { await saveEmbeddedAttendance(b.dataset.del, null); toast("出欠記録を削除しました"); } catch(fallbackError) { toast("削除に失敗しました: " + fallbackError.message, true); } } else toast("削除に失敗しました: " + e.message, true); } }));
 }
 $("attendanceDateFilter").addEventListener("change", renderAttendance);
 $("btnResetAttendance").addEventListener("click", resetAttendanceForm);
