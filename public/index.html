@@ -84,6 +84,12 @@
     transition: color .2s, border-color .2s;
   }
   .admin-link:hover, .admin-link:focus-visible { color: var(--text); border-color: var(--violet); }
+  .page-nav { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
+  @media (max-width: 720px) {
+    header { align-items: flex-start; gap: 18px; }
+    .brand small { display: none; }
+    .page-nav { max-width: 230px; }
+  }
 
   /* ---------- ヒーロー ---------- */
   .hero { padding: 72px 0 56px; }
@@ -236,7 +242,12 @@
 <div class="wrap">
   <header>
     <div class="brand latin"><span class="dot"></span>AI STUDY&nbsp;<small>/ internal session</small></div>
-    <div style="display:flex;gap:8px"><a class="admin-link" href="./board.html">アイデア掲示板</a><a class="admin-link" href="./admin.html">管理者ページ</a></div>
+    <nav class="page-nav" aria-label="ページナビゲーション">
+      <a class="admin-link" href="./board.html">アイデア掲示板</a>
+      <a class="admin-link" href="./dashboard.html">活用ダッシュボード</a>
+      <a class="admin-link" href="./form.html">事例を投稿</a>
+      <a class="admin-link" href="./admin.html">管理者ページ</a>
+    </nav>
   </header>
 
   <!-- ヒーロー -->
