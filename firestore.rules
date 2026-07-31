@@ -116,7 +116,13 @@ service cloud.firestore {
     // ---------- AI勉強会: 参加後アンケート ----------
     match /aiStudy_surveys/{surveyId} {
       allow read: if aiStudyIsAdmin();
-      allow create, update: if aiStudyIsMember()
+      // アンケートは回答権リストへの登録有無にかかわらず、Google ログイン済みの
+      // 参加者が回答できるようにする。保存データはログイン本人にひも付ける。
+      allow create: if aiStudySignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email.lower() == aiStudyEmail();
+      allow update: if aiStudySignedIn()
+        && resource.data.uid == request.auth.uid
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email.lower() == aiStudyEmail();
       allow delete: if aiStudyIsAdmin();
