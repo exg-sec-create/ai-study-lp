@@ -26,17 +26,41 @@ jobs:
         uses: actions/deploy-pages@v4
   deploy-firestore-rules:
     # 出欠管理などで使うコレクションのルールも、ページと同時に反映する。
-    # FIREBASE_TOKEN は `firebase login:ci` で発行し、Repository secret に登録する。
+    # サービスアカウント JSON（推奨）または従来の FIREBASE_TOKEN を
+    # Repository secret に登録する。どちらもない場合は手動デプロイ運用として
+    # 自動デプロイだけをスキップする。
     runs-on: ubuntu-latest
     env:
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
-      - name: Firebase credentials check
+      - name: Configure Firebase credentials
+        id: firebase-auth
+        shell: bash
         run: |
-          if [ -z "$FIREBASE_TOKEN" ]; then
-            echo "::error::FIREBASE_TOKEN is not configured. Firestore rules were not deployed, so board posts are rejected."
-            exit 1
+          if [ -n "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            credentials_file="$RUNNER_TEMP/firebase-service-account.json"
+            printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$credentials_file"
+            if ! jq -e '.type == "service_account" and .project_id == "exceed-secretary-system" and .client_email and .private_key' "$credentials_file" >/dev/null; then
+              echo "::error::FIREBASE_SERVICE_ACCOUNT must be a valid service-account JSON key for exceed-secretary-system."
+              exit 1
+            fi
+            echo "GOOGLE_APPLICATION_CREDENTIALS=$credentials_file" >> "$GITHUB_ENV"
+            echo "auth=service-account" >> "$GITHUB_OUTPUT"
+          elif [ -n "$FIREBASE_TOKEN" ]; then
+            echo "auth=token" >> "$GITHUB_OUTPUT"
+            echo "::warning::FIREBASE_TOKEN is deprecated by Firebase CLI. Migrate to FIREBASE_SERVICE_ACCOUNT."
+          else
+            echo "auth=none" >> "$GITHUB_OUTPUT"
+            echo "::warning::Firebase credentials are not configured; automatic Firestore rules deployment was skipped. Publish firestore.rules manually in the Firebase console."
           fi
       - name: Deploy Firestore rules
-        run: npx --yes firebase-tools@14.11.1 deploy --only firestore:rules --project exceed-secretary-system --non-interactive --token "$FIREBASE_TOKEN"
+        if: steps.firebase-auth.outputs.auth != 'none'
+        shell: bash
+        run: |
+          args=(deploy --only firestore:rules --project exceed-secretary-system --non-interactive)
+          if [ "${{ steps.firebase-auth.outputs.auth }}" = "token" ]; then
+            args+=(--token "$FIREBASE_TOKEN")
+          fi
+          npx --yes firebase-tools@14.11.1 "${args[@]}"
