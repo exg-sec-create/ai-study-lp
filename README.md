@@ -60,7 +60,21 @@ git push
 
 - `git push` … GitHubにコードを記録（履歴が残る）
 - GitHub Pagesの公開設定により、対象ブランチへのpushが公開サイトに反映されます。
-- FirestoreルールもGitHub Actionsから反映されます。リポジトリのActions secretに、`firebase login:ci`で発行した`FIREBASE_TOKEN`を登録してください。未登録の場合は、ページだけ公開されて投稿が失敗する状態を防ぐためデプロイをエラーにします。
+- FirestoreルールもGitHub Actionsから反映されます。初回のみ、以下の「Firestoreルールのデプロイ認証」を設定してください。認証情報が未登録の場合は、ページだけ公開されて投稿が失敗する状態を防ぐため、ルールのデプロイを意図的にエラーにします。
+
+### Firestoreルールのデプロイ認証
+
+GitHubの **Settings → Secrets and variables → Actions → New repository secret** で、次のいずれかを登録します。
+
+1. **推奨: `FIREBASE_SERVICE_ACCOUNT`**
+   - Firebaseプロジェクト `exceed-secretary-system` で、Firestoreルールを更新できるサービスアカウントを用意します。
+   - そのサービスアカウントのJSONキーを、改行を含むJSON全文のままsecretの値に登録します。
+   - workflowは実行時だけ一時ファイルに復元し、Firebase CLIのApplication Default Credentialsとして利用します。
+2. **移行用: `FIREBASE_TOKEN`**
+   - `firebase login:ci` で発行したトークンを登録します。
+   - Firebase CLIではこの認証方法が非推奨になっているため、新規設定ではサービスアカウントを使ってください。
+
+登録後、失敗したActions画面の **Re-run jobs** を実行します。`Firebase credentials check`で表示される「not configured」は、アプリやFirestoreルールの構文エラーではなく、GitHub ActionsからFirebaseへ接続する認証secretが存在しないことを表します。secretはセキュリティ上workflowファイルには保存しません。
 
 ### 前提ツール
 
