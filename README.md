@@ -60,7 +60,7 @@ git push
 
 - `git push` … GitHubにコードを記録（履歴が残る）
 - GitHub Pagesの公開設定により、対象ブランチへのpushが公開サイトに反映されます。
-- FirestoreルールもGitHub Actionsから反映されます。初回のみ、以下の「Firestoreルールのデプロイ認証」を設定してください。認証情報が未登録の場合は、ページだけ公開されて投稿が失敗する状態を防ぐため、ルールのデプロイを意図的にエラーにします。
+- Firestoreルールは、認証secretがあればGitHub Actionsから自動反映されます。secretを作成できない場合も、以下の手順でFirebase Consoleから手動反映できます。認証情報が未登録のActionsでは、自動デプロイを警告付きでスキップします。
 
 ### Firestoreルールのデプロイ認証
 
@@ -75,7 +75,19 @@ GitHubの **Settings → Secrets and variables → Actions → New repository se
    - `firebase login:ci` で発行したトークンを登録します。
    - Firebase CLIではこの認証方法が非推奨になっているため、新規設定ではサービスアカウントを使ってください。
 
-登録後、失敗したActions画面の **Re-run jobs** を実行します。`Configure Firebase credentials`で表示される「not configured」は、アプリやFirestoreルールの構文エラーではなく、GitHub ActionsからFirebaseへ接続する認証secretが存在しないことを表します。secretはセキュリティ上workflowファイルには保存しません。
+登録後、Actions画面から **Re-run jobs** を実行します。`Configure Firebase credentials`で表示される警告は、アプリやFirestoreルールの構文エラーではなく、GitHub ActionsからFirebaseへ接続する認証secretが存在しないため自動反映をスキップしたことを表します。secretはセキュリティ上workflowファイルには保存しません。
+
+### JSONキーを作成できない場合（手動反映）
+
+Firebaseプロジェクトの編集権限はあるもののサービスアカウントキーを作成できない場合は、次の手順で反映します。
+
+1. このリポジトリの [`firestore.rules`](./firestore.rules) を開き、内容をすべてコピーします。
+2. [Firebase Console](https://console.firebase.google.com/) で `exceed-secretary-system` を開きます。
+3. **Firestore Database → ルール**を開き、既存のルールをコピーした内容で置き換えます。
+4. **公開**を押し、エラーが表示されないことを確認します。
+5. GitHub Actionsの`deploy-firestore-rules`が警告付きで完了していることを確認します。認証secretがない間、以後の`firestore.rules`変更も同じ手順で手動反映してください。
+
+この方法ではJSONキーも`FIREBASE_TOKEN`も不要です。ただし、GitHub上のファイルを変更しただけではFirebase側へ反映されないため、ルールを変更するたびに必ず手動で公開してください。
 
 ### 前提ツール
 

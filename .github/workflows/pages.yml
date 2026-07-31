@@ -27,7 +27,8 @@ jobs:
   deploy-firestore-rules:
     # 出欠管理などで使うコレクションのルールも、ページと同時に反映する。
     # サービスアカウント JSON（推奨）または従来の FIREBASE_TOKEN を
-    # Repository secret に登録する。どちらもない場合は意図的に失敗させる。
+    # Repository secret に登録する。どちらもない場合は手動デプロイ運用として
+    # 自動デプロイだけをスキップする。
     runs-on: ubuntu-latest
     env:
       FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -51,11 +52,11 @@ jobs:
             echo "auth=token" >> "$GITHUB_OUTPUT"
             echo "::warning::FIREBASE_TOKEN is deprecated by Firebase CLI. Migrate to FIREBASE_SERVICE_ACCOUNT."
           else
-            echo "::error::Firebase credentials are not configured. Add the FIREBASE_SERVICE_ACCOUNT repository secret (recommended), or FIREBASE_TOKEN temporarily."
-            echo "::error::Firestore rules were not deployed; changes that depend on the new rules will be rejected."
-            exit 1
+            echo "auth=none" >> "$GITHUB_OUTPUT"
+            echo "::warning::Firebase credentials are not configured; automatic Firestore rules deployment was skipped. Publish firestore.rules manually in the Firebase console."
           fi
       - name: Deploy Firestore rules
+        if: steps.firebase-auth.outputs.auth != 'none'
         shell: bash
         run: |
           args=(deploy --only firestore:rules --project exceed-secretary-system --non-interactive)
