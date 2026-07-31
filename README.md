@@ -67,14 +67,15 @@ git push
 GitHubの **Settings → Secrets and variables → Actions → New repository secret** で、次のいずれかを登録します。
 
 1. **推奨: `FIREBASE_SERVICE_ACCOUNT`**
-   - Firebaseプロジェクト `exceed-secretary-system` で、Firestoreルールを更新できるサービスアカウントを用意します。
+   - Firebaseプロジェクト `exceed-secretary-system` のサービスアカウント一覧では、GitHub Actions専用の **`github-action-1303421154@exceed-secretary-system.iam.gserviceaccount.com`** を選択します。汎用の **`firebase-adminsdk-fbsvc@exceed-secretary-system.iam.gserviceaccount.com`** のキーは作成しません。
+   - `github-action-1303421154` にFirestoreルールを更新できる必要最小限の権限が付与されていることを確認します。
    - そのサービスアカウントのJSONキーを、改行を含むJSON全文のままsecretの値に登録します。
    - workflowは実行時だけ一時ファイルに復元し、Firebase CLIのApplication Default Credentialsとして利用します。
 2. **移行用: `FIREBASE_TOKEN`**
    - `firebase login:ci` で発行したトークンを登録します。
    - Firebase CLIではこの認証方法が非推奨になっているため、新規設定ではサービスアカウントを使ってください。
 
-登録後、失敗したActions画面の **Re-run jobs** を実行します。`Firebase credentials check`で表示される「not configured」は、アプリやFirestoreルールの構文エラーではなく、GitHub ActionsからFirebaseへ接続する認証secretが存在しないことを表します。secretはセキュリティ上workflowファイルには保存しません。
+登録後、失敗したActions画面の **Re-run jobs** を実行します。`Configure Firebase credentials`で表示される「not configured」は、アプリやFirestoreルールの構文エラーではなく、GitHub ActionsからFirebaseへ接続する認証secretが存在しないことを表します。secretはセキュリティ上workflowファイルには保存しません。
 
 ### 前提ツール
 
