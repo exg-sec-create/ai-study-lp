@@ -113,6 +113,15 @@ service cloud.firestore {
       allow read, write: if aiStudyIsAdmin();
     }
 
+    // ---------- AI勉強会: 参加後アンケート ----------
+    match /aiStudy_surveys/{surveyId} {
+      allow read: if aiStudyIsAdmin();
+      allow create, update: if aiStudyIsMember()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email.lower() == aiStudyEmail();
+      allow delete: if aiStudyIsAdmin();
+    }
+
     // ---------- 上記以外は全拒否 ----------
     match /{document=**} {
       allow read, write: if false;

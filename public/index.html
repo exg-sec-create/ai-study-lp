@@ -181,6 +181,9 @@
   }
   .rsvp-card p.note { color: var(--muted); font-size: 14px; max-width: 560px; }
   .rsvp-actions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+  .survey-card { border-color: rgba(70,227,200,.35); }
+  .survey-btn { display:inline-flex; align-items:center; gap:10px; text-decoration:none; background:linear-gradient(120deg,var(--teal),#8bffd9); color:#09201d; }
+  .survey-btn:hover { box-shadow:0 10px 34px rgba(70,227,200,.25); transform:translateY(-1px); }
 
   .btn {
     appearance: none; border: none; cursor: pointer;
@@ -246,6 +249,7 @@
       <a class="admin-link" href="./board.html">アイデア掲示板</a>
       <a class="admin-link" href="./dashboard.html">活用ダッシュボード</a>
       <a class="admin-link" href="./form.html">事例を投稿</a>
+      <a class="admin-link" href="./survey.html">参加後アンケート</a>
       <a class="admin-link" href="./admin.html">管理者ページ</a>
     </nav>
   </header>
@@ -287,6 +291,17 @@
     </div>
     <div class="agenda" id="agendaList">
       <div class="slot"><div class="time">--:--</div><div><h3>読み込み中…</h3></div></div>
+    </div>
+  </section>
+
+  <!-- 参加後アンケート -->
+  <section id="survey">
+    <div class="sec-head reveal"><h2>参加後アンケート</h2><span class="en latin">Feedback</span></div>
+    <div class="rsvp-card survey-card reveal">
+      <p class="note">より役立つ勉強会にしていくため、参加後の感想をお聞かせください。所要時間は約2分です。</p>
+      <div class="rsvp-actions">
+        <a class="btn survey-btn" href="./survey.html">アンケートに回答する <span aria-hidden="true">→</span></a>
+      </div>
     </div>
   </section>
 
