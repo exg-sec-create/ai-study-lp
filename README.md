@@ -45,6 +45,24 @@ ai-study-lp/
 └── README.md               このファイル
 ```
 
+## 🧭 社内AI活用レベル診断（単独ページ）
+
+既存ページのナビゲーションには掲載せず、URLを知っている社員だけが利用する独立ページです。
+
+- 診断: `public/ai-diagnosis.html`
+- 管理者向け集計: `public/ai-diagnosis-results.html`
+- 保存先: Firestore `aiStudy_aiDiagnostics/{Googleログインのuid}`（再回答時は最新結果に更新）
+
+### Firebase / Firestore 構築手順
+
+1. Firebase Consoleで既存プロジェクトを開き、**Authentication → Sign-in method → Google** を有効にします。
+2. **Authentication → Settings → Authorized domains** に公開ドメイン（GitHub Pagesの場合は `exg-sec-create.github.io`）を追加します。
+3. **Firestore Database** を作成し、`public/firebase-config.js` を対象Webアプリの設定値に合わせます。
+4. リポジトリ直下で `firebase deploy --only firestore:rules` を実行し、`firestore.rules` を反映します。CLIを利用できない場合は、上記「JSONキーを作成できない場合」の手順でルールを手動公開します。
+5. `aiStudy_settings/access` に `admins`（集計閲覧者のメール配列）と `members`（社員メール配列）を設定します。診断への回答自体はGoogleログイン済みの社員を想定し、集計ページは `admins` のみ閲覧できます。
+
+診断結果にはメールアドレス、表示名、部署（任意）、設問別回答、希望ツール、自由記述、得点・レベルを保存します。運用開始前に社内の個人情報・AI利用ポリシーに沿って、閲覧管理者と保存期間を決めてください。集計はブラウザ内で最新回答をリアルタイム集計し、CSVとしてダウンロードできます。
+
 ---
 
 ## 🔄 更新のしかた（開発者向け）
