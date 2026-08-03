@@ -128,6 +128,24 @@ service cloud.firestore {
       allow delete: if aiStudyIsAdmin();
     }
 
+    // ---------- 社内AI活用レベル診断 ----------
+    // 回答者は本人の結果だけを保存・参照でき、全体集計は管理者だけが閲覧できます。
+    match /aiStudy_aiDiagnostics/{uid} {
+      allow read: if aiStudySignedIn()
+        && (request.auth.uid == uid || aiStudyIsAdmin());
+      allow create, update: if aiStudySignedIn()
+        && request.auth.uid == uid
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email.lower() == aiStudyEmail()
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 56
+        && request.resource.data.level is int
+        && request.resource.data.level >= 1
+        && request.resource.data.level <= 5;
+      allow delete: if aiStudyIsAdmin();
+    }
+
     // ---------- 上記以外は全拒否 ----------
     match /{document=**} {
       allow read, write: if false;
