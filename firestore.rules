@@ -146,6 +146,22 @@ service cloud.firestore {
       allow delete: if aiStudyIsAdmin();
     }
 
+    // 診断は回答のたびに追記し、過去結果を上書きせず成長を確認できるようにします。
+    match /aiStudy_aiDiagnosticResponses/{responseId} {
+      allow read: if aiStudyIsAdmin();
+      allow create: if aiStudySignedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.email.lower() == aiStudyEmail()
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 56
+        && request.resource.data.level is int
+        && request.resource.data.level >= 1
+        && request.resource.data.level <= 5;
+      allow update: if false;
+      allow delete: if aiStudyIsAdmin();
+    }
+
     // ---------- 上記以外は全拒否 ----------
     match /{document=**} {
       allow read, write: if false;
