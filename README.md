@@ -11,8 +11,12 @@
 |--------|-----|------|
 | **出欠LP** | https://exg-sec-create.github.io/ai-study-lp/ | 勉強会の案内・出欠回答 |
 | **管理者ページ** | https://exg-sec-create.github.io/ai-study-lp/admin.html | イベント内容の編集・実施日ごとの出欠／出席率管理（管理者のみ） |
+| **参加後アンケート** | https://exg-sec-create.github.io/ai-study-lp/survey.html | 勉強会参加後のアンケート回答 |
+| **AI IDEA BOARD** | https://exg-sec-create.github.io/ai-study-lp/board.html | AIに関する疑問・アイデアの共有 |
 | **事例投稿フォーム** | https://exg-sec-create.github.io/ai-study-lp/form.html | AI活用事例の投稿（Googleログイン） |
 | **活用ダッシュボード** | https://exg-sec-create.github.io/ai-study-lp/dashboard.html | 事例・削減時間・ランキングの可視化 |
+| **社内AI活用レベル診断** | https://exg-sec-create.github.io/ai-study-lp/ai-diagnosis.html | AI活用レベルの診断（Googleログイン） |
+| **診断結果集計** | https://exg-sec-create.github.io/ai-study-lp/ai-diagnosis-results.html | 診断結果の集計・CSV出力（管理者のみ） |
 
 ---
 
@@ -49,8 +53,8 @@ ai-study-lp/
 
 既存ページのナビゲーションには掲載せず、URLを知っている社員だけが利用する独立ページです。
 
-- 診断: `public/ai-diagnosis.html`
-- 管理者向け集計: `public/ai-diagnosis-results.html`
+- 診断: https://exg-sec-create.github.io/ai-study-lp/ai-diagnosis.html（`public/ai-diagnosis.html`）
+- 管理者向け集計: https://exg-sec-create.github.io/ai-study-lp/ai-diagnosis-results.html（`public/ai-diagnosis-results.html`）
 - 保存先: Firestore `aiStudy_aiDiagnostics/{Googleログインのuid}`（再回答時は最新結果に更新）
 
 ### Firebase / Firestore 構築手順
