@@ -162,12 +162,6 @@ service cloud.firestore {
       allow delete: if aiStudyIsAdmin();
     }
 
-    // ---------- AI勉強会: 発表者管理（発表履歴・評価） ----------
-    // 評価コメントを含むため、閲覧・編集とも管理者のみ。
-    match /aiStudy_presentations/{presentationId} {
-      allow read, write: if aiStudyIsAdmin();
-    }
-
     // ---------- 上記以外は全拒否 ----------
     match /{document=**} {
       allow read, write: if false;
