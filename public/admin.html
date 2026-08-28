@@ -119,8 +119,6 @@
   .q-editor-item .q-label { flex:1; min-width:200px; }
   .q-add-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:10px; }
   .q-add-row select { width:auto; }
-
-  .rating-stars { color: var(--teal); letter-spacing:1px; }
 </style>
 </head>
 <body>
@@ -243,57 +241,6 @@
       <h3 style="font-size:14px">自由記述</h3><div class="comment-list" id="surveyComments"><p class="desc">回答はまだありません。</p></div>
       <div class="survey-table-wrap" style="margin-top:24px"><table><thead><tr id="surveyTableHead"><th>実施日</th><th>回答者</th></tr></thead><tbody id="surveyBody"><tr><td colspan="2" style="color:var(--muted)">読み込み中…</td></tr></tbody></table></div>
     </div>
-
-    <!-- 発表者管理 -->
-    <div class="card">
-      <h2>発表者管理 <span class="tag">Presenters</span></h2>
-      <p class="desc">勉強会の発表者・テーマ・評価の履歴を管理します。</p>
-
-      <div class="survey-summary" id="presenterSummary"></div>
-
-      <h3 style="font-size:14px;margin-top:22px">発表者別の集計</h3>
-      <table style="margin-top:10px">
-        <thead><tr><th>発表者</th><th>登壇回数</th><th>平均評価</th></tr></thead>
-        <tbody id="presenterAggBody"><tr><td colspan="3" style="color:var(--muted)">読み込み中…</td></tr></tbody>
-      </table>
-
-      <h3 style="font-size:14px;margin-top:28px" id="presFormTitle">発表を追加</h3>
-      <div class="grid2">
-        <div><label>回・実施タイミング</label><input type="text" id="pSession" placeholder="例：第5回 / 2026-09-10"></div>
-        <div><label>発表者名</label><input type="text" id="pPresenter" placeholder="例：竹内"></div>
-      </div>
-      <label>テーマ</label><input type="text" id="pTheme" placeholder="例：NotebookLMを使った議事録要約">
-      <label>紹介ツール</label><input type="text" id="pTools" placeholder="例：NotebookLM, ボイスメモ">
-      <label>活用事例・詳細</label><textarea id="pDetails" rows="3"></textarea>
-      <div class="grid2">
-        <div><label>評価 <span style="letter-spacing:0;text-transform:none">（任意）</span></label>
-          <select id="pRating">
-            <option value="">未評価</option>
-            <option value="1">★☆☆☆☆ (1)</option>
-            <option value="2">★★☆☆☆ (2)</option>
-            <option value="3">★★★☆☆ (3)</option>
-            <option value="4">★★★★☆ (4)</option>
-            <option value="5">★★★★★ (5)</option>
-          </select>
-        </div>
-        <div><label>評価コメント <span style="letter-spacing:0;text-transform:none">（任意）</span></label><input type="text" id="pComment" placeholder="例：デモが分かりやすかった"></div>
-      </div>
-      <div style="margin-top:16px">
-        <button class="btn btn-primary" id="btnSavePresentation">保存</button>
-        <button class="btn btn-ghost" id="btnResetPresentation" type="button" style="margin-left:8px">入力をクリア</button>
-      </div>
-
-      <h3 style="font-size:14px;margin-top:28px">発表履歴</h3>
-      <div class="survey-table-wrap" style="margin-top:10px">
-        <table>
-          <thead><tr><th>回</th><th>発表者</th><th>テーマ</th><th>紹介ツール</th><th>評価</th><th></th></tr></thead>
-          <tbody id="presentationBody"><tr><td colspan="6" style="color:var(--muted)">読み込み中…</td></tr></tbody>
-        </table>
-      </div>
-
-      <p class="desc" style="margin-top:20px">過去のスプレッドシート「AI勉強会 発表者まとめ」の内容を一度だけ取り込めます。第4回・齋藤康貴さんの回は元シートで欄の意味が判別できなかったため、「Gemini」を紹介ツールとして仮登録しています。内容をご確認のうえ、必要であれば編集してください。</p>
-      <button class="btn btn-ghost" id="btnSeedPresentations" type="button">スプレッドシートの過去データを取り込む</button>
-    </div>
   </div>
 </div>
 
@@ -329,7 +276,6 @@ function toast(msg, isErr=false) {
 /* ---------- 認証 / 管理者判定 ---------- */
 let unsubAttendance = null;
 let unsubSurvey = null;
-let unsubPresentations = null;
 let accessMembers = [];
 let surveyQuestions = normalizeSurveyQuestions(null);
 
@@ -345,7 +291,6 @@ onAuthStateChanged(auth, async (user) => {
     $("gateMsg").textContent = "管理権限のあるGoogleアカウントでログインしてください。";
     if (unsubAttendance) { unsubAttendance(); unsubAttendance = null; }
     if (unsubSurvey) { unsubSurvey(); unsubSurvey = null; }
-    if (unsubPresentations) { unsubPresentations(); unsubPresentations = null; }
     return;
   }
   // 管理者判定: settings/access は管理者のみ読取可能なので、読めれば管理者
@@ -392,7 +337,6 @@ async function enterPanel(access) {
   $("aDate").value = new Date().toISOString().slice(0, 10);
   watchAttendance();
   watchSurvey();
-  watchPresentations();
 }
 
 /* アジェンダ編集 */
@@ -700,154 +644,6 @@ function renderSurvey(){
   $("surveyBody").innerHTML=rows.map(r=>`<tr><td>${esc(r.eventDate)}</td><td>${esc(r.name||r.email)}</td>${tableQs.map(q=>`<td>${esc(r[q.id]??"")}</td>`).join("")}</tr>`).join("")||`<tr><td colspan="${2+tableQs.length}" style="color:var(--muted)">回答はまだありません。</td></tr>`;
 }
 $("surveyDateFilter").addEventListener("change",renderSurvey);
-/* ---------- 発表者管理 ---------- */
-let presentationRows = [];
-let editingPresentationId = null;
-
-function newPresentationId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
-function ratingStars(r) { const n = Number(r); return n ? "★".repeat(n) + "☆".repeat(5 - n) : "—"; }
-
-function watchPresentations() {
-  if (unsubPresentations) unsubPresentations();
-  unsubPresentations = onSnapshot(collection(db, "aiStudy_presentations"), snap => {
-    presentationRows = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    renderPresentations();
-  }, e => {
-    $("presentationBody").innerHTML = `<tr><td colspan="6" style="color:var(--absent)">読込エラー: ${esc(e.message)}</td></tr>`;
-  });
-}
-
-function renderPresentations() {
-  const rows = [...presentationRows].sort((a, b) =>
-    String(b.session || "").localeCompare(String(a.session || "")) ||
-    String(a.presenterName || "").localeCompare(String(b.presenterName || ""))
-  );
-  const body = $("presentationBody");
-  body.innerHTML = rows.length ? rows.map(r => `<tr>
-      <td class="latin">${esc(r.session)}</td>
-      <td>${esc(r.presenterName)}</td>
-      <td>${esc(r.theme || "—")}</td>
-      <td>${esc(r.tools || "—")}</td>
-      <td class="rating-stars">${ratingStars(r.rating)}</td>
-      <td><button class="btn-mini" data-edit="${esc(r.id)}">編集</button> <button class="btn-mini" data-del="${esc(r.id)}">削除</button></td>
-    </tr>`).join("") : `<tr><td colspan="6" style="color:var(--muted)">発表履歴はまだありません。</td></tr>`;
-
-  body.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", () => loadPresentationIntoForm(b.dataset.edit)));
-  body.querySelectorAll("[data-del]").forEach(b => b.addEventListener("click", async () => {
-    if (!confirm("この発表履歴を削除しますか?")) return;
-    try {
-      await deleteDoc(doc(db, "aiStudy_presentations", b.dataset.del));
-      toast("発表履歴を削除しました");
-      if (editingPresentationId === b.dataset.del) resetPresentationForm();
-    } catch (e) { toast("削除に失敗しました: " + e.message, true); }
-  }));
-
-  renderPresenterAggregate(rows);
-}
-
-function renderPresenterAggregate(rows) {
-  const byPresenter = new Map();
-  rows.forEach(r => {
-    const name = String(r.presenterName || "").trim();
-    if (!name) return;
-    if (!byPresenter.has(name)) byPresenter.set(name, { count: 0, ratingSum: 0, ratingCount: 0 });
-    const agg = byPresenter.get(name);
-    agg.count += 1;
-    if (Number(r.rating)) { agg.ratingSum += Number(r.rating); agg.ratingCount += 1; }
-  });
-  const entries = [...byPresenter.entries()].sort((a, b) => b[1].count - a[1].count);
-  $("presenterAggBody").innerHTML = entries.length ? entries.map(([name, agg]) =>
-    `<tr><td>${esc(name)}</td><td>${agg.count}回</td><td>${agg.ratingCount ? (agg.ratingSum / agg.ratingCount).toFixed(1) + " / 5" : "—"}</td></tr>`
-  ).join("") : `<tr><td colspan="3" style="color:var(--muted)">発表履歴はまだありません。</td></tr>`;
-
-  const ratedRows = rows.filter(r => Number(r.rating));
-  const avgAll = ratedRows.length ? (ratedRows.reduce((n, r) => n + Number(r.rating), 0) / ratedRows.length).toFixed(1) : "—";
-  const tiles = [
-    `<div class="survey-metric"><b>${rows.length}</b><span>発表件数（延べ）</span></div>`,
-    `<div class="survey-metric"><b>${byPresenter.size}</b><span>発表者数</span></div>`,
-    `<div class="survey-metric"><b>${avgAll}</b><span>全体平均評価 / 5</span></div>`,
-  ];
-  $("presenterSummary").style.gridTemplateColumns = `repeat(${tiles.length}, 1fr)`;
-  $("presenterSummary").innerHTML = tiles.join("");
-}
-
-function loadPresentationIntoForm(id) {
-  const r = presentationRows.find(x => x.id === id);
-  if (!r) return;
-  editingPresentationId = id;
-  $("pSession").value = r.session || "";
-  $("pPresenter").value = r.presenterName || "";
-  $("pTheme").value = r.theme || "";
-  $("pTools").value = r.tools || "";
-  $("pDetails").value = r.details || "";
-  $("pRating").value = r.rating ? String(r.rating) : "";
-  $("pComment").value = r.comment || "";
-  $("presFormTitle").textContent = "発表を編集";
-  window.scrollTo({ top: $("pSession").getBoundingClientRect().top + window.scrollY - 30, behavior: "smooth" });
-}
-function resetPresentationForm() {
-  editingPresentationId = null;
-  $("pSession").value = ""; $("pPresenter").value = ""; $("pTheme").value = "";
-  $("pTools").value = ""; $("pDetails").value = ""; $("pRating").value = ""; $("pComment").value = "";
-  $("presFormTitle").textContent = "発表を追加";
-}
-$("btnResetPresentation").addEventListener("click", resetPresentationForm);
-
-$("btnSavePresentation").addEventListener("click", async () => {
-  const session = $("pSession").value.trim();
-  const presenterName = $("pPresenter").value.trim();
-  if (!session || !presenterName) { toast("回・実施タイミングと発表者名を入力してください", true); return; }
-  const record = {
-    session, presenterName,
-    theme: $("pTheme").value.trim(),
-    tools: $("pTools").value.trim(),
-    details: $("pDetails").value.trim(),
-    rating: $("pRating").value ? Number($("pRating").value) : null,
-    comment: $("pComment").value.trim(),
-    updatedAt: serverTimestamp(),
-  };
-  const id = editingPresentationId || newPresentationId();
-  try {
-    $("btnSavePresentation").disabled = true;
-    await setDoc(doc(db, "aiStudy_presentations", id), editingPresentationId ? record : { ...record, createdAt: serverTimestamp() }, { merge: true });
-    toast(editingPresentationId ? "発表履歴を更新しました" : "発表履歴を保存しました");
-    resetPresentationForm();
-  } catch (e) { toast("保存に失敗しました: " + e.message, true); }
-  finally { $("btnSavePresentation").disabled = false; }
-});
-
-/* 過去データの一括取り込み(スプレッドシート「AI勉強会 発表者まとめ」より・冪等) */
-const SEED_PRESENTATIONS = [
-  { id: "seed-1", session: "第1回", presenterName: "早坂" },
-  { id: "seed-2", session: "第1回", presenterName: "竹内" },
-  { id: "seed-3", session: "第1回", presenterName: "手川" },
-  { id: "seed-4", session: "第1回", presenterName: "小関" },
-  { id: "seed-5", session: "第2回", presenterName: "本間" },
-  { id: "seed-6", session: "第3回", presenterName: "竹内", theme: "録音データとNotebookLMを活用した議事録・タスク抽出の効率化", tools: "NotebookLM, ボイスメモ", details: "会議や商談の録音をNotebookLMに取り込み、要約やタスク抽出を数秒で完了させる手法。" },
-  { id: "seed-7", session: "第3回", presenterName: "加藤", theme: "AIの特性理解とビジネスコミュニケーションへの具体的な活用事例", tools: "Gemini, Claude", details: "乱雑なSlackの要約や、角が立たない丁寧なビジネスメールの作成。AIを「個性的な後輩」として扱う。" },
-  { id: "seed-8", session: "第4回", presenterName: "齋藤康貴", tools: "Gemini" },
-  { id: "seed-9", session: "第4回", presenterName: "手川" },
-];
-$("btnSeedPresentations").addEventListener("click", async () => {
-  if (!confirm("スプレッドシートの過去データ（第1〜4回・全9件）を取り込みます。既に取り込み済みの項目は上書きしません。よろしいですか?")) return;
-  const btn = $("btnSeedPresentations");
-  btn.disabled = true;
-  try {
-    let added = 0;
-    for (const seed of SEED_PRESENTATIONS) {
-      if (presentationRows.some(r => r.id === seed.id)) continue;
-      await setDoc(doc(db, "aiStudy_presentations", seed.id), {
-        session: seed.session, presenterName: seed.presenterName,
-        theme: seed.theme || "", tools: seed.tools || "", details: seed.details || "",
-        rating: null, comment: "",
-        createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-      });
-      added++;
-    }
-    toast(added ? `${added}件を取り込みました` : "取り込み済みのため追加はありませんでした");
-  } catch (e) { toast("取り込みに失敗しました: " + e.message, true); }
-  finally { btn.disabled = false; }
-});
 $("btnSurveyCsv").addEventListener("click",()=>{const keys=["eventDate","name","email",...surveyQuestions.map(q=>q.id)],labels=["実施日","回答者","メールアドレス",...surveyQuestions.map(q=>q.label)],filter=$("surveyDateFilter").value,rows=surveyRows.filter(r=>filter==="all"||r.eventDate===filter),csv=[labels,...rows.map(r=>keys.map(k=>r[k]??""))].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n"),a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv"}));a.download=`survey_${filter}.csv`;a.click();URL.revokeObjectURL(a.href)});
 </script>
 </body>
