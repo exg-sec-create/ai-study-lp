@@ -291,8 +291,8 @@
         </table>
       </div>
 
-      <p class="desc" style="margin-top:20px">過去のスプレッドシート「AI勉強会 発表者まとめ」の内容を一度だけ取り込めます。第4回・齋藤康貴さんの回は元シートで欄の意味が判別できなかったため、「Gemini」を紹介ツールとして仮登録しています。内容をご確認のうえ、必要であれば編集してください。</p>
-      <button class="btn btn-ghost" id="btnSeedPresentations" type="button">スプレッドシートの過去データを取り込む</button>
+      <p class="desc" style="margin-top:20px">過去の発表データ（第1〜4回）を一度だけ取り込めます。</p>
+      <button class="btn btn-ghost" id="btnSeedPresentations" type="button">過去の発表データを取り込む</button>
     </div>
   </div>
 </div>
@@ -816,7 +816,7 @@ $("btnSavePresentation").addEventListener("click", async () => {
   finally { $("btnSavePresentation").disabled = false; }
 });
 
-/* 過去データの一括取り込み(スプレッドシート「AI勉強会 発表者まとめ」より・冪等) */
+/* 過去データの一括取り込み(第1〜4回・冪等) */
 const SEED_PRESENTATIONS = [
   { id: "seed-1", session: "第1回", presenterName: "早坂" },
   { id: "seed-2", session: "第1回", presenterName: "竹内" },
@@ -829,7 +829,7 @@ const SEED_PRESENTATIONS = [
   { id: "seed-9", session: "第4回", presenterName: "手川" },
 ];
 $("btnSeedPresentations").addEventListener("click", async () => {
-  if (!confirm("スプレッドシートの過去データ（第1〜4回・全9件）を取り込みます。既に取り込み済みの項目は上書きしません。よろしいですか?")) return;
+  if (!confirm("過去の発表データ（第1〜4回・全9件）を取り込みます。既に取り込み済みの項目は上書きしません。よろしいですか?")) return;
   const btn = $("btnSeedPresentations");
   btn.disabled = true;
   try {
