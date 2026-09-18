@@ -109,6 +109,26 @@
   .topic-row { display:grid; grid-template-columns:minmax(130px,1fr) 2fr 38px; align-items:center; gap:10px; font-size:12px; margin:9px 0; }
   .topic-bar { height:8px; background:var(--bg); border-radius:9px; overflow:hidden; }.topic-bar i { display:block; height:100%; background:linear-gradient(90deg,var(--violet),var(--teal)); border-radius:9px; }
   .comment-list { display:grid; gap:9px; margin-top:18px; }.comment-item { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:13px; font-size:13px; }.comment-item small { color:var(--muted); }
+  .manage-details, .respondent-card { border:1px solid var(--line); border-radius:12px; background:var(--bg); }
+  .manage-details { margin-top:20px; }
+  .manage-details > summary, .respondent-card > summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 16px; cursor:pointer; font-weight:700; list-style:none; }
+  .manage-details > summary::-webkit-details-marker, .respondent-card > summary::-webkit-details-marker { display:none; }
+  .manage-details > summary::after, .respondent-card > summary::after { content:"＋"; color:var(--teal); font-size:18px; }
+  .manage-details[open] > summary::after, .respondent-card[open] > summary::after { content:"−"; }
+  .manage-details > summary:hover, .respondent-card > summary:hover { color:var(--teal); }
+  .manage-details-body { padding:0 16px 18px; border-top:1px solid var(--line); }
+  .respondent-list { display:grid; gap:12px; margin-top:18px; }
+  .respondent-card > summary { font-size:14px; }
+  .respondent-meta { color:var(--muted); font-size:12px; font-weight:400; margin-left:auto; }
+  .respondent-body { padding:0 16px 16px; border-top:1px solid var(--line); }
+  .survey-submission { padding:14px 0; }
+  .survey-submission + .survey-submission { border-top:1px solid var(--line); }
+  .submission-date { color:var(--teal); font:500 12px "Space Grotesk", sans-serif; margin-bottom:8px; }
+  .answer-grid { display:grid; grid-template-columns:minmax(150px, 1fr) 2fr; gap:0 16px; }
+  .answer-grid dt, .answer-grid dd { padding:8px 0; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
+  .answer-grid dt { color:var(--muted); font-size:12px; }
+  .answer-grid dd { font-size:13px; }
+  @media(max-width:640px){.respondent-meta{display:none}.answer-grid{grid-template-columns:1fr}.answer-grid dt{border-bottom:0;padding-bottom:0}.answer-grid dd{padding-top:2px}}
   @media(max-width:700px){.survey-summary{grid-template-columns:1fr 1fr}.survey-table-wrap{overflow:auto}}
 
   .q-editor-item { background: var(--bg); border:1px solid var(--line); border-radius:12px; padding:16px; margin-bottom:14px; }
@@ -195,6 +215,9 @@
         <div class="attendance-metric"><b id="attendanceRecorded">0 / 0</b><span>出席者数 / 対象メンバー数</span></div>
         <div class="attendance-metric"><b id="attendanceUnanswered">0名</b><span>欠席回答者</span></div>
       </div>
+      <details class="manage-details">
+        <summary>出欠メンバーを管理 <span class="respondent-meta">登録・編集・一覧表示</span></summary>
+        <div class="manage-details-body">
       <div class="grid2">
         <div><label>実施日</label><input type="date" id="aDate"></div>
         <div><label>氏名 <span style="letter-spacing:0;text-transform:none">（任意）</span></label><input type="text" id="aName" placeholder="例：山田 太郎"></div>
@@ -213,6 +236,8 @@
         <tbody id="respBody"><tr><td colspan="6" style="color:var(--muted)">読み込み中…</td></tr></tbody>
       </table>
       <div style="margin-top:16px"><button class="btn btn-ghost" id="btnCsv">CSVをダウンロード</button></div>
+        </div>
+      </details>
     </div>
 
     <!-- アンケート項目編集 -->
@@ -238,8 +263,8 @@
       <div class="attendance-controls"><div><label>表示する実施日</label><select id="surveyDateFilter"><option value="all">すべての実施日</option></select></div><button class="btn btn-ghost" id="btnSurveyCsv">回答CSVをダウンロード</button></div>
       <div class="survey-summary" id="surveySummary"></div>
       <div id="surveyChoiceBlocks"></div>
-      <h3 style="font-size:14px">自由記述</h3><div class="comment-list" id="surveyComments"><p class="desc">回答はまだありません。</p></div>
-      <div class="survey-table-wrap" style="margin-top:24px"><table><thead><tr id="surveyTableHead"><th>実施日</th><th>回答者</th></tr></thead><tbody id="surveyBody"><tr><td colspan="2" style="color:var(--muted)">読み込み中…</td></tr></tbody></table></div>
+      <h3 style="font-size:14px">回答者ごとの回答</h3>
+      <div class="respondent-list" id="surveyRespondents"><p class="desc">読み込み中…</p></div>
     </div>
   </div>
 </div>
@@ -616,14 +641,13 @@ $("btnCsv").addEventListener("click", () => {
 
 /* 参加後アンケート集計 */
 let surveyRows=[];
-function watchSurvey(){if(unsubSurvey)unsubSurvey();unsubSurvey=onSnapshot(collection(db,"aiStudy_surveys"),snap=>{surveyRows=snap.docs.map(d=>({id:d.id,...d.data()}));refreshSurveyDates();renderSurvey()},e=>{$("surveyBody").innerHTML=`<tr><td colspan="6" style="color:var(--absent)">読込エラー: ${esc(e.message)}</td></tr>`})}
+function watchSurvey(){if(unsubSurvey)unsubSurvey();unsubSurvey=onSnapshot(collection(db,"aiStudy_surveys"),snap=>{surveyRows=snap.docs.map(d=>({id:d.id,...d.data()}));refreshSurveyDates();renderSurvey()},e=>{$("surveyRespondents").innerHTML=`<p style="color:var(--absent)">読込エラー: ${esc(e.message)}</p>`})}
 function refreshSurveyDates(){const s=$("surveyDateFilter"),old=s.value,dates=[...new Set(surveyRows.map(r=>r.eventDate).filter(Boolean))].sort().reverse();s.innerHTML='<option value="all">すべての実施日</option>'+dates.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join("");s.value=dates.includes(old)?old:(dates[0]||"all")}
 function renderSurvey(){
   const filter=$("surveyDateFilter").value;
   const rows=surveyRows.filter(r=>filter==="all"||r.eventDate===filter);
   const scaleQs=surveyQuestions.filter(q=>q.type==="scale");
   const choiceQs=surveyQuestions.filter(q=>q.type==="choice");
-  const textQs=surveyQuestions.filter(q=>q.type==="text");
 
   const tiles=[`<div class="survey-metric"><b>${rows.length}</b><span>回答数</span></div>`]
     .concat(scaleQs.map(q=>{const avg=rows.length?(rows.reduce((n,r)=>n+Number(r[q.id]||0),0)/rows.length).toFixed(1):"—";return `<div class="survey-metric"><b>${esc(avg)}</b><span>${esc(q.label)} / 5</span></div>`}));
@@ -636,12 +660,23 @@ function renderSurvey(){
     return `<h3 style="font-size:14px">${esc(q.label)}</h3><div style="margin:12px 0 25px;color:var(--muted)">${bars}</div>`;
   }).join("");
 
-  const comments=rows.flatMap(r=>textQs.filter(q=>r[q.id]).map(q=>({name:r.name||r.email,label:q.label,text:r[q.id]})));
-  $("surveyComments").innerHTML=comments.map(c=>`<div class="comment-item"><small>${esc(c.label)} · ${esc(c.name)}</small><div>${esc(c.text)}</div></div>`).join("")||'<p class="desc">自由記述の回答はまだありません。</p>';
-
-  const tableQs=[...scaleQs,...choiceQs];
-  $("surveyTableHead").innerHTML=`<th>実施日</th><th>回答者</th>${tableQs.map(q=>`<th>${esc(q.label)}</th>`).join("")}`;
-  $("surveyBody").innerHTML=rows.map(r=>`<tr><td>${esc(r.eventDate)}</td><td>${esc(r.name||r.email)}</td>${tableQs.map(q=>`<td>${esc(r[q.id]??"")}</td>`).join("")}</tr>`).join("")||`<tr><td colspan="${2+tableQs.length}" style="color:var(--muted)">回答はまだありません。</td></tr>`;
+  // メールアドレスを優先キーにして、同じ人から複数回届いた回答も1か所にまとめる。
+  const respondents=new Map();
+  rows.forEach(r=>{
+    const key=String(r.email||r.name||r.id).trim().toLowerCase();
+    if(!respondents.has(key))respondents.set(key,[]);
+    respondents.get(key).push(r);
+  });
+  const grouped=[...respondents.values()].sort((a,b)=>String(a[0].name||a[0].email).localeCompare(String(b[0].name||b[0].email),"ja"));
+  $("surveyRespondents").innerHTML=grouped.map(group=>{
+    const first=group[0],displayName=first.name||first.email||"名前未設定";
+    const meta=[first.email&&first.email!==displayName?first.email:"",group.length>1?`${group.length}件の回答`:""].filter(Boolean).join(" · ");
+    const submissions=group.sort((a,b)=>String(b.eventDate||"").localeCompare(String(a.eventDate||""))).map(r=>{
+      const answers=surveyQuestions.map(q=>`<dt>${esc(q.label)}</dt><dd>${esc(r[q.id]??"—")}</dd>`).join("");
+      return `<section class="survey-submission"><div class="submission-date">${esc(r.eventDate||"実施日未設定")}</div><dl class="answer-grid">${answers}</dl></section>`;
+    }).join("");
+    return `<details class="respondent-card"><summary><span>${esc(displayName)}</span>${meta?`<span class="respondent-meta">${esc(meta)}</span>`:""}</summary><div class="respondent-body">${submissions}</div></details>`;
+  }).join("")||'<p class="desc">回答はまだありません。</p>';
 }
 $("surveyDateFilter").addEventListener("change",renderSurvey);
 $("btnSurveyCsv").addEventListener("click",()=>{const keys=["eventDate","name","email",...surveyQuestions.map(q=>q.id)],labels=["実施日","回答者","メールアドレス",...surveyQuestions.map(q=>q.label)],filter=$("surveyDateFilter").value,rows=surveyRows.filter(r=>filter==="all"||r.eventDate===filter),csv=[labels,...rows.map(r=>keys.map(k=>r[k]??""))].map(row=>row.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n"),a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\uFEFF"+csv],{type:"text/csv"}));a.download=`survey_${filter}.csv`;a.click();URL.revokeObjectURL(a.href)});
