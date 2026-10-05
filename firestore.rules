@@ -2,33 +2,45 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-// --- AI活用事例（誰でも閲覧・投稿可、更新はいいね数のみ） ---
+// --- AI活用事例（社員のみ閲覧・投稿。更新はいいね数のみ） ---
+    // 事例には氏名・メールが含まれるため、閲覧も社員ログインに限定する。
     match /aiStudy_cases/{caseId} {
-      allow read: if true;
-      allow create: if request.resource.data.keys().hasAll(['email','tool','title','body'])
+      allow read: if aiStudyIsStaff();
+      allow create: if aiStudyIsStaff()
+                    && request.resource.data.keys().hasAll(['email','tool','title','body'])
+                    && request.resource.data.email == aiStudyEmail()
                     && request.resource.data.title is string
                     && request.resource.data.title.size() > 0
-                    && request.resource.data.title.size() < 200;
-      // 更新は likesCount の ±1 のみ許可（他フィールドの改ざん防止）
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount'])
+                    && request.resource.data.title.size() < 200
+                    && request.resource.data.likesCount == 0;
+      // 更新は likesCount の ±1 のみ。いいね記録(aiStudy_likes)の作成/削除と同時でなければ拒否し、
+      // 1人が何度も押して件数を水増しできないようにする。
+      allow update: if aiStudyIsStaff()
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likesCount'])
                     && request.resource.data.likesCount is int
                     && request.resource.data.likesCount >= 0
-                    && (request.resource.data.likesCount == resource.data.likesCount + 1
-                     || request.resource.data.likesCount == resource.data.likesCount - 1);
-      allow delete: if false;
+                    && ((request.resource.data.likesCount == resource.data.likesCount + 1
+                         && !exists(aiStudyLikePath(caseId)) && existsAfter(aiStudyLikePath(caseId)))
+                     || (request.resource.data.likesCount == resource.data.likesCount - 1
+                         && exists(aiStudyLikePath(caseId)) && !existsAfter(aiStudyLikePath(caseId))));
+      allow delete: if aiStudyIsAdmin();
     }
- 
-    // --- 社員マスタ（Gmail突合の参照元・読み取りのみ） ---
+
+    // --- 社員マスタ（氏名・部門の自動判定に使用。登録は管理者のみ） ---
     match /aiStudy_employees/{email} {
-      allow read: if true;
-      allow write: if false;   // 登録・更新はサーバー鍵（管理スクリプト）からのみ
+      allow read: if aiStudyIsStaff();
+      allow write: if aiStudyIsAdmin();
     }
- 
-    // --- いいね記録（1人1事例1回・重複防止はドキュメントIDで担保） ---
+
+    // --- いいね記録（ドキュメントIDは「事例ID_uid」。本人の分だけ作成・削除できる） ---
     match /aiStudy_likes/{likeId} {
-      allow read: if true;
-      allow create: if true;
-      allow delete: if true;
+      // IDの末尾が自分のuidのものだけ読める（未作成のドキュメントの存在確認もできるように）
+      allow read: if aiStudySignedIn() && likeId.matches('.*_' + request.auth.uid + '$');
+      allow create: if aiStudyIsStaff()
+                    && request.resource.data.keys().hasOnly(['caseId','uid','createdAt'])
+                    && request.resource.data.uid == request.auth.uid
+                    && likeId == request.resource.data.caseId + '_' + request.auth.uid;
+      allow delete: if aiStudySignedIn() && resource.data.uid == request.auth.uid;
       allow update: if false;
     }
 
@@ -40,7 +52,8 @@ service cloud.firestore {
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 30
         && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 100
         && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 1000;
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if aiStudyIsAdmin();   // 不適切な投稿の削除用
     }
 
     match /aiStudy_boardReplies/{replyId} {
@@ -50,7 +63,8 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/aiStudy_boardPosts/$(request.resource.data.postId))
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 30
         && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 600;
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if aiStudyIsAdmin();
     }
 
     // ============================================================
@@ -75,6 +89,22 @@ service cloud.firestore {
     }
     function aiStudyIsAdmin() {
       return aiStudySignedIn() && aiStudyEmail() in aiStudyAccess().admins;
+    }
+    // 社員判定: メール確認済みの社内ドメイン、または members / admins に登録されたアカウント
+    function aiStudyIsStaff() {
+      return aiStudySignedIn()
+        && request.auth.token.email_verified == true
+        && (aiStudyEmail().matches('.*@(ych-exceed[.]com|besto-haus[.]com|exceed-group[.]co[.]jp|yamagata[.]pg-house[.]jp)$')
+            || aiStudyEmail() in aiStudyAccess().get('members', [])
+            || aiStudyIsAdmin());
+    }
+    function aiStudyLikePath(caseId) {
+      return /databases/$(database)/documents/aiStudy_likes/$(caseId + '_' + request.auth.uid);
+    }
+    // アンバサダー制度の提案ページを閲覧できる人（社長など）。admins は自動的に含む
+    function aiStudyCanViewProposal() {
+      return aiStudyIsAdmin()
+        || (aiStudySignedIn() && aiStudyEmail() in aiStudyAccess().get('proposalViewers', []));
     }
     function aiStudyIsMember() {
       // 管理者は自動的に回答権も持つ
@@ -118,10 +148,10 @@ service cloud.firestore {
       allow read: if aiStudyIsAdmin();
       // アンケートは回答権リストへの登録有無にかかわらず、Google ログイン済みの
       // 参加者が回答できるようにする。保存データはログイン本人にひも付ける。
-      allow create: if aiStudySignedIn()
+      allow create: if aiStudyIsStaff()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email.lower() == aiStudyEmail();
-      allow update: if aiStudySignedIn()
+      allow update: if aiStudyIsStaff()
         && resource.data.uid == request.auth.uid
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email.lower() == aiStudyEmail();
@@ -133,7 +163,7 @@ service cloud.firestore {
     match /aiStudy_aiDiagnostics/{uid} {
       allow read: if aiStudySignedIn()
         && (request.auth.uid == uid || aiStudyIsAdmin());
-      allow create, update: if aiStudySignedIn()
+      allow create, update: if aiStudyIsStaff()
         && request.auth.uid == uid
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email.lower() == aiStudyEmail()
@@ -149,7 +179,7 @@ service cloud.firestore {
     // 診断は回答のたびに追記し、過去結果を上書きせず成長を確認できるようにします。
     match /aiStudy_aiDiagnosticResponses/{responseId} {
       allow read: if aiStudyIsAdmin();
-      allow create: if aiStudySignedIn()
+      allow create: if aiStudyIsStaff()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email.lower() == aiStudyEmail()
         && request.resource.data.score is int
@@ -160,6 +190,36 @@ service cloud.firestore {
         && request.resource.data.level <= 5;
       allow update: if false;
       allow delete: if aiStudyIsAdmin();
+    }
+
+    // ---------- AIアンバサダー制度: 提案・運用ページ（ambassador.html） ----------
+    // 本文はリポジトリに置かず Firestore にだけ保存する（公開リポジトリから内部方針が漏れないように）。
+    // 閲覧: admins + proposalViewers / 修正: admins のみ
+    match /aiStudy_ambassador/{docId} {
+      allow read: if aiStudyCanViewProposal();
+      allow write: if aiStudyIsAdmin()
+        && request.resource.data.updatedBy == aiStudyEmail()
+        && request.resource.data.content is string
+        && request.resource.data.content.size() < 500000;
+    }
+    // 修正履歴（追記のみ。過去版の改ざん・削除はできない）
+    match /aiStudy_ambassadorHistory/{revId} {
+      allow read: if aiStudyIsAdmin();
+      allow create: if aiStudyIsAdmin()
+        && request.resource.data.updatedBy == aiStudyEmail()
+        && request.resource.data.content is string
+        && request.resource.data.content.size() < 500000;
+      allow update, delete: if false;
+    }
+    // 社長・閲覧者からの判断（承認／保留／要修正）とコメント。項目ごとに最新の判断を保持
+    match /aiStudy_ambassadorFeedback/{itemId} {
+      allow read: if aiStudyCanViewProposal();
+      allow write: if aiStudyCanViewProposal()
+        && request.resource.data.keys().hasOnly(['status','comment','by','byName','at'])
+        && request.resource.data.status in ['approve','hold','revise','none']
+        && request.resource.data.comment is string
+        && request.resource.data.comment.size() <= 2000
+        && request.resource.data.by == aiStudyEmail();
     }
 
     // ---------- 上記以外は全拒否 ----------
