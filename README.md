@@ -17,6 +17,8 @@
 | **活用ダッシュボード** | https://exg-sec-create.github.io/ai-study-lp/dashboard.html | 事例・削減時間・ランキングの可視化 |
 | **社内AI活用レベル診断** | https://exg-sec-create.github.io/ai-study-lp/ai-diagnosis.html | AI活用レベルの診断（Googleログイン） |
 | **診断結果集計** | https://exg-sec-create.github.io/ai-study-lp/ai-diagnosis-results.html | 診断結果の集計・CSV出力（管理者のみ） |
+| **AIアンバサダー運用設計** | https://exg-sec-create.github.io/ai-study-lp/ambassador.html | 制度の提案・運用マップ（RULE/STANDARD/PLAYBOOK）。提案モード／修正モード（管理者＋閲覧許可者のみ） |
+| **社員マスタ管理** | https://exg-sec-create.github.io/ai-study-lp/employees.html | 事例投稿の氏名・部門判定に使う社員マスタの登録（管理者のみ） |
 
 ---
 
@@ -43,6 +45,8 @@ ai-study-lp/
 │   ├── admin.html          管理者ページ
 │   ├── form.html           事例投稿フォーム
 │   ├── dashboard.html      活用ダッシュボード
+│   ├── ambassador.html     AIアンバサダー運用設計（提案／修正モード）
+│   ├── employees.html      社員マスタ管理
 │   └── firebase-config.js  Firebase接続設定
 ├── firestore.rules         Firestoreセキュリティルール
 ├── firebase.json           Firebase設定
@@ -116,6 +120,26 @@ Firebaseプロジェクトの編集権限はあるもののサービスアカウ
 ```bash
 node -v        # v18以上
 ```
+
+---
+
+## 🤝 AIアンバサダー運用設計ページ（ambassador.html）
+
+- **本文はリポジトリに置かない**：制度の中身はFirestore `aiStudy_ambassador/proposal` にだけ保存します。このリポジトリは公開なので、内部方針をHTMLに直書きしないでください。
+- **提案モード**：社長確認用の閲覧表示。判断事項ごとに「承認／保留／要修正」とコメントを残せます（`aiStudy_ambassadorFeedback`）。
+- **修正モード**：管理者（`admins`）のみ。文字を直接クリックして編集し、「保存する」で新しい版として記録（`aiStudy_ambassadorHistory` に追記、過去版は消えない）。
+- **閲覧者の追加**：ページ内「管理・履歴」タブ、または `aiStudy_settings/access` の `proposalViewers` 配列にメールを追加。
+- **初回の取り込み**：修正モードの「JSON読込」で、社長室保管の初期データ（リポジトリ外）を読み込んで保存します。
+- **ローカル確認**：`public/ambassador-seed.local.json` を置き、`http://localhost:<port>/ambassador.html?local=1` で開くとログインなしで表示できます（`*.local.json` はgitignore済み）。
+
+---
+
+## 🔐 セキュリティ方針
+
+- 社員の氏名・メールなどの個人情報をコードに書かない（社員マスタはFirestoreに登録）。
+- 事例・社員マスタ・いいねの読み書きは、社内ドメイン（またはmembers登録）のGoogleログインに限定。
+- ユーザー入力を画面に出すときは必ずエスケープする（`esc()`）。
+- Firebaseのブラウザ用APIキーは公開前提の値ですが、Google Cloud Consoleで「HTTPリファラ制限」をかけてください。
 
 ---
 

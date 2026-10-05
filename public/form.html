@@ -60,7 +60,8 @@
   .time-box { background:#F0F2FA; border-radius:var(--rs); padding:16px; margin-bottom:18px; }
   .time-box .tt { font-size:13px; font-weight:700; margin-bottom:4px; }
   .time-box .td { font-size:11px; color:var(--t2); margin-bottom:13px; line-height:1.5; }
-  .time-inputs { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:end; }
+  .time-inputs { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; gap:10px; align-items:end; }
+  @media (max-width:520px){ .time-inputs { grid-template-columns:1fr auto 1fr; } .time-inputs > :nth-child(4) { display:none; } .time-inputs > :nth-child(5) { grid-column:1 / -1; } }
   .time-inputs .arrow { font-size:20px; color:var(--violet); padding-bottom:8px; }
   .mini-label { font-size:11px; color:var(--t2); margin-bottom:5px; display:block; }
   .preview { margin-top:12px; font-size:13px; font-weight:700; color:var(--teal); text-align:center; min-height:18px; }
@@ -120,6 +121,16 @@
       <span class="out" id="logout">別のアカウント</span>
     </div>
 
+    <div class="field hidden" id="dept-field">
+      <label>所属部門<span class="req">*</span><span class="hint">社員マスタ未登録のため選択してください</span></label>
+      <select id="f-dept">
+        <option value="">選択してください</option>
+        <option>役員</option><option>社長室</option><option>営業</option><option>CX課</option>
+        <option>工事部</option><option>工務課</option><option>工務サポート</option><option>設計課</option>
+        <option>IC課</option><option>企画開発部</option><option>総務</option><option>経理課</option><option>その他</option>
+      </select>
+    </div>
+
     <div class="field">
       <label>使用したAIツール<span class="req">*</span></label>
       <select id="f-tool">
@@ -138,6 +149,11 @@
         <option>メール・連絡文</option><option>調査・リサーチ</option><option>コーディング</option>
         <option>翻訳</option><option>その他</option>
       </select>
+    </div>
+
+    <div class="field">
+      <label>対象業務<span class="req">*</span><span class="hint">AIで置き換えた業務名</span></label>
+      <input type="text" id="f-task" placeholder="例：議事録作成／顧客への定型メール／見積比較表" maxlength="60">
     </div>
 
     <div class="field">
@@ -163,7 +179,7 @@
     <!-- 作業効率 -->
     <div class="time-box">
       <div class="tt">⏱ 作業効率（任意・でも入れると効果が見えます）</div>
-      <div class="td">この作業にかかっていた時間を「分」で入力してください。削減率が自動計算され、ダッシュボードの「累計削減時間」に加算されます。</div>
+      <div class="td">この作業にかかっていた時間を「分」で入力してください。削減率が自動計算され、ダッシュボードの「累計削減時間」に加算されます。月の実施回数を入れると「月間の削減時間」も見える化されます。</div>
       <div class="time-inputs">
         <div>
           <span class="mini-label">導入前（分）</span>
@@ -173,6 +189,11 @@
         <div>
           <span class="mini-label">導入後（分）</span>
           <input type="text" id="f-after" inputmode="numeric" placeholder="例：30">
+        </div>
+        <div class="arrow">×</div>
+        <div>
+          <span class="mini-label">月の実施回数</span>
+          <input type="text" id="f-freq" inputmode="numeric" placeholder="例：4">
         </div>
       </div>
       <div class="preview" id="time-preview"></div>
@@ -222,8 +243,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// 社員マスタ（Firestoreが空でも動くようフォールバック内蔵）
-const EMP_MAP = {"y-togashi@ych-exceed.com":{"name":"冨樫 宜信","dept":"役員","role":"代表取締役"},"m-togashi@ych-exceed.com":{"name":"冨樫 美好","dept":"役員","role":"専務取締役"},"koseki@ych-exceed.com":{"name":"小関 信吾","dept":"役員","role":"常務取締役"},"yamamoto@ych-exceed.com":{"name":"山本 剛大","dept":"役員","role":"取締役"},"kazuo-suzuki@sample.com":{"name":"鈴木 和夫","dept":"工事部","role":""},"suzuki@ych-exceed.com":{"name":"鈴木 覚","dept":"工事部","role":""},"matsumoto@ych-exceed.com":{"name":"松本 康志","dept":"工事部","role":""},"imai@ych-exceed.com":{"name":"今井 昭義","dept":"工事部","role":""},"farook@ych-exceed.com":{"name":"ファルハーン ファールック","dept":"工事部","role":""},"kimura@ych-exceed.com":{"name":"木村 亮太","dept":"工事部","role":""},"yoshio.izuta@gmail.com":{"name":"伊豆田 好男","dept":"工事部","role":""},"togashi_24@ych-exceed.com":{"name":"冨樫 優太","dept":"工事部","role":""},"kouki-saito@ych-exceed.com":{"name":"西塔 光樹","dept":"工事部","role":""},"onuma@ych-exceed.com":{"name":"大沼 絵梨","dept":"総務","role":""},"shoko-suzuki@ych-exceed.com":{"name":"鈴木 尚子","dept":"総務","role":""},"otaki@ych-exceed.com":{"name":"大滝 友美","dept":"工務サポート","role":""},"sakai@ych-exceed.com":{"name":"酒井 唯","dept":"IC課","role":""},"kidoguchi@ych-exceed.com":{"name":"城戸口 孝一","dept":"工務サポート","role":""},"takada@besto-haus.com":{"name":"高田 美沙","dept":"IC課","role":""},"kikuchi@ych-exceed.com":{"name":"菊地 和樹","dept":"設計課","role":""},"shohei_sakai@ych-exceed.com":{"name":"酒井 翔平","dept":"工務課","role":""},"saito_24@besto-haus.com":{"name":"齋藤 あずさ","dept":"IC課","role":""},"kokubun@ych-exceed.com":{"name":"國分 亮","dept":"工務課","role":""},"obari@ych-exceed.com":{"name":"大張 早葵","dept":"工務サポート","role":""},"yasutaka-saio@ych-exceed.com":{"name":"齋藤 康貴","dept":"設計課","role":""},"matsuda@ych-exceed.com":{"name":"松田 卓磨","dept":"工務課","role":""},"ouchi@ych-exceed.com":{"name":"大内 梨央","dept":"IC課","role":""},"aoyama@ych-exceed.com":{"name":"青山 真彩美","dept":"企画開発部","role":""},"moemi-sato@ych-exceed.com":{"name":"佐藤 萌美","dept":"営業","role":""},"daichi-takahashi@ych-exceed.com":{"name":"髙橋 大地","dept":"その他","role":""},"tegawa@ych-exceed.com":{"name":"手川 武海","dept":"社長室","role":""},"risa-watanabe@ych-exceed.com":{"name":"渡辺 莉沙","dept":"経理課","role":""},"hayasaka@ych-exceed.com":{"name":"早坂 都古","dept":"工務サポート","role":""},"chika-takahashi@ych-exceed.com":{"name":"高橋 知佳","dept":"総務","role":""},"sasaki@besto-haus.com":{"name":"佐々木 絢子","dept":"営業","role":""},"yamagishi@besto-haus.com":{"name":"山岸 和樹","dept":"営業","role":"PG HOUSE 山形 事業責任者"},"oka@yamagata.pg-house.jp":{"name":"岡 亮志","dept":"営業","role":""},"homma@ych-exceed.com":{"name":"本間 繁樹","dept":"営業","role":"店長"},"nabeshima@ych-exceed.com":{"name":"鍋島 雄佑","dept":"営業","role":""},"shun-arakawa@ych-exceed.com":{"name":"荒川 瞬","dept":"営業","role":""},"ryoma-kato@ych-exceed.com":{"name":"加藤 亮真","dept":"営業","role":""},"higashimoto@besto-haus.com":{"name":"東本 隆志","dept":"営業","role":"店長"},"shinya-kudo@besto-haus.com":{"name":"工藤 信哉","dept":"営業","role":"店長"},"hidetoshi-konno@besto-haus.com":{"name":"近野 秀敏","dept":"営業","role":"店長"},"inamura@besto-haus.com":{"name":"稲村 正明","dept":"営業","role":""},"kunii@besto-haus.com":{"name":"國井 岳人","dept":"営業","role":""},"takahiro-kikuchi@besto-haus.com":{"name":"菊地 高広","dept":"営業","role":""},"sakurai_24@besto-haus.com":{"name":"櫻井 颯人","dept":"営業","role":""},"sugawara@besto-haus.com":{"name":"菅原 貴久","dept":"営業","role":""},"masaki-hasegawa@besto-haus.com":{"name":"長谷川 雅輝","dept":"営業","role":""},"takeuchi_23@besto-haus.com":{"name":"竹内 大翔","dept":"CX課","role":""},"kaori-goto@ych-exceed.com":{"name":"後藤 佳央里","dept":"CX課","role":""},"maki-sato@ych-exceed.com":{"name":"佐藤 真紀","dept":"CX課","role":""},"ayumi-sakurai@ych-exceed.com":{"name":"櫻井 歩","dept":"CX課","role":""},"yuuto-sato@ych-exceed.com":{"name":"佐藤 裕斗","dept":"工務課","role":""},"senri-ishikawa@exceed-group.co.jp":{"name":"石川 千莉","dept":"営業","role":""}};
+// 社員マスタは Firestore の aiStudy_employees のみを参照する（個人情報をコードに埋め込まない）
 
 let currentUser = null;
 let currentEmp = null;
@@ -249,8 +269,9 @@ onAuthStateChanged(auth, async (user) => {
       const snap = await getDoc(doc(db,'aiStudy_employees',email));
       if(snap.exists()) emp = snap.data();
     } catch(e){}
-    if(!emp) emp = EMP_MAP[email] || null;
-    currentEmp = emp || { name: user.displayName || email, dept:'不明', role:'' };
+    currentEmp = emp || { name: user.displayName || email, dept:'', role:'' };
+    // 社員マスタ未登録の人だけ部門を選んでもらう
+    $('dept-field').classList.toggle('hidden', !!(emp && emp.dept));
 
     $('who-name').textContent = currentEmp.name;
     $('who-dept').textContent = currentEmp.dept ? '（'+currentEmp.dept+'）' : '';
@@ -277,16 +298,19 @@ paintStars();
 function updatePreview(){
   const b = parseInt($('f-before').value,10);
   const a = parseInt($('f-after').value,10);
+  const f = parseInt($('f-freq').value,10);
   const el = $('time-preview');
   if(b>0 && a>=0 && a<=b){
     const saved = b-a; const rate = Math.round((saved/b)*1000)/10;
-    el.textContent = `▼ ${rate}% 削減（${saved}分の短縮）`;
+    const monthly = f>0 ? ` ／ 月あたり約${Math.round(saved*f/60*10)/10}時間の削減` : '';
+    el.textContent = `▼ ${rate}% 削減（1回${saved}分の短縮）${monthly}`;
   } else if(b>0 && a>b){
     el.textContent = '導入後の時間が導入前より長くなっています';
   } else { el.textContent=''; }
 }
 $('f-before').oninput = updatePreview;
 $('f-after').oninput = updatePreview;
+$('f-freq').oninput = updatePreview;
 
 // --- 投稿 ---
 $('submit-btn').onclick = async () => {
@@ -297,11 +321,18 @@ $('submit-btn').onclick = async () => {
   const body = $('f-body').value.trim();
   const effect = $('f-effect').value.trim();
   const referenceUrl = $('f-url').value.trim();
+  const task = $('f-task').value.trim();
+  const freq = parseInt($('f-freq').value,10);
+  const dept = currentEmp.dept || $('f-dept').value;
   const before = parseInt($('f-before').value,10);
   const after = parseInt($('f-after').value,10);
 
-  if(!title || !body || !effect){
-    $('form-err').textContent = 'タイトル・使い方・効果は必須です。';
+  if(!title || !body || !effect || !task){
+    $('form-err').textContent = '対象業務・タイトル・使い方・効果は必須です。';
+    return;
+  }
+  if(!dept){
+    $('form-err').textContent = '所属部門を選択してください。';
     return;
   }
 
@@ -318,9 +349,9 @@ $('submit-btn').onclick = async () => {
   const data = {
     email: currentUser.email.toLowerCase(),
     name: currentEmp.name,
-    dept: currentEmp.dept || '不明',
+    dept: dept || '不明',
     role: currentEmp.role || '',
-    tool, scene, title, body, effect,
+    tool, scene, task, title, body, effect,
     difficulty,
     likesCount: 0,
     createdAt: serverTimestamp(),
@@ -328,6 +359,7 @@ $('submit-btn').onclick = async () => {
   if(referenceUrl) data.referenceUrl = referenceUrl;
   if(!isNaN(before) && before>0) data.beforeMin = before;
   if(!isNaN(after) && after>=0) data.afterMin = after;
+  if(!isNaN(freq) && freq>0 && freq<=500) data.monthlyCount = freq;
 
   $('submit-btn').disabled = true;
   $('submit-btn').textContent = '投稿中...';
@@ -347,7 +379,7 @@ $('submit-btn').onclick = async () => {
 // --- もう1件 ---
 $('again').onclick = (e) => {
   e.preventDefault();
-  ['f-title','f-body','f-effect','f-url','f-before','f-after'].forEach(id=>$(id).value='');
+  ['f-task','f-title','f-body','f-effect','f-url','f-before','f-after','f-freq'].forEach(id=>$(id).value='');
   difficulty = 3; paintStars(); $('time-preview').textContent='';
   $('done').classList.add('hidden');
   $('form').classList.remove('hidden');
