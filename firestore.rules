@@ -228,14 +228,18 @@ service cloud.firestore {
       allow read, write: if aiStudyIsAdmin();
     }
 
-    // ---------- 運営コンソール: Slack #ask-ai勉強会 の自動確認結果 ----------
-    // 書き込みは Google Apps Script（gas/slack-monitor）が Firestore REST API で行う。
-    // GAS は IAM 権限で書き込むため、このルールの影響を受けない（ブラウザからは書けない）。
+    // ---------- 運営コンソール: Claude 週次解析の結果（Slack・所見） ----------
+    // 書き込みは週1回の Claude 解析（tools/claude-weekly）が Firebase CLI のログイン権限で行う。
+    // IAM 権限での書き込みはこのルールの影響を受けない（ブラウザからは書けない）。
     match /aiStudy_slackThreads/{threadId} {
       allow read: if aiStudyIsAdmin();
       allow write: if false;
     }
     match /aiStudy_slackSync/{docId} {
+      allow read: if aiStudyIsAdmin();
+      allow write: if false;
+    }
+    match /aiStudy_insights/{docId} {
       allow read: if aiStudyIsAdmin();
       allow write: if false;
     }
