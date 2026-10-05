@@ -3,21 +3,63 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>参加後アンケート | AI勉強会</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/theme.css">
 <style>
-:root{--bg:#0b0e1a;--card:#12172b;--field:#0e1324;--line:rgba(235,239,255,.11);--text:#eceff8;--muted:#98a0bc;--violet:#8b7cff;--teal:#46e3c8;--danger:#ff8390}*{box-sizing:border-box}body{margin:0;background:radial-gradient(700px 420px at 90% 0,rgba(139,124,255,.18),transparent 65%),var(--bg);color:var(--text);font-family:"Zen Kaku Gothic New",sans-serif;line-height:1.7}.wrap{width:min(760px,calc(100% - 40px));margin:auto;padding-bottom:70px}header{height:76px;display:flex;justify-content:space-between;align-items:center}.brand{font:700 14px "Space Grotesk";letter-spacing:.05em}.brand:before{content:"";display:inline-block;width:11px;height:11px;border-radius:3px;background:linear-gradient(135deg,var(--violet),var(--teal));margin-right:10px}.back{color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:99px;padding:7px 14px;font-size:12px}.hero{padding:44px 0 35px}.eyebrow{color:var(--teal);font:700 12px "Space Grotesk";letter-spacing:.24em;text-transform:uppercase}.hero h1{font:800 clamp(31px,7vw,50px)/1.35 "Shippori Mincho B1";margin:13px 0}.hero p{color:var(--muted);margin:0}.progress{height:4px;background:var(--line);border-radius:9px;margin-top:29px;overflow:hidden}.progress span{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--violet),var(--teal));transition:width .25s}.card{background:rgba(18,23,43,.94);border:1px solid var(--line);border-radius:20px;padding:clamp(22px,5vw,38px);margin-bottom:18px}.gate{text-align:center;padding:48px 24px}.gate h2{margin:0 0 8px}.gate p{color:var(--muted);font-size:14px}.google,.submit{border:0;border-radius:99px;padding:14px 27px;font:700 14px inherit;cursor:pointer}.google{background:#fff;color:#181b25}.question{margin-bottom:32px}.question:last-child{margin-bottom:0}.question legend,.question>label{display:block;font-weight:700;margin-bottom:12px}.req{color:var(--teal);font-size:11px;margin-left:8px}.scale{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.scale input{position:absolute;opacity:0}.scale label{display:flex;flex-direction:column;align-items:center;padding:11px 4px;border:1px solid var(--line);border-radius:12px;color:var(--muted);cursor:pointer;transition:.2s}.scale label b{font:700 19px "Space Grotesk"}.scale input:checked+label{border-color:var(--teal);background:rgba(70,227,200,.1);color:var(--teal)}.ends{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:7px}select,textarea{width:100%;background:var(--field);color:var(--text);border:1px solid var(--line);border-radius:11px;padding:13px;font:14px inherit}textarea{min-height:105px;resize:vertical}select:focus,textarea:focus{outline:2px solid rgba(70,227,200,.4);border-color:var(--teal)}.userline{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px;margin-bottom:18px}.linkbtn{border:0;background:none;color:var(--muted);text-decoration:underline;cursor:pointer}.submit{width:100%;background:linear-gradient(110deg,var(--violet),var(--teal));color:#0b0e1a;font-size:16px}.submit:disabled{opacity:.5}.error{color:var(--danger);font-size:13px;margin:12px 0 0}.done{text-align:center;padding:55px 25px}.done .mark{font-size:45px}.done a{display:inline-block;color:#071712;background:var(--teal);border-radius:99px;padding:11px 22px;text-decoration:none;font-weight:700}.hidden{display:none!important}@media(max-width:520px){.scale{gap:4px}.scale label{padding:9px 2px}.hero{padding-top:27px}}
+/* survey 固有のスタイル。色・文字は assets/theme.css のトークンを使用 */
+h1,h2,p{margin:0}
+.survey-wrap{max-width:760px}
+.progress{height:4px;background:var(--line-strong);border-radius:9px;margin-top:26px;overflow:hidden}
+.progress span{display:block;width:0;height:100%;background:var(--grad);transition:width .25s}
+.card{border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(180deg,rgba(24,31,56,.75),rgba(18,23,43,.6));padding:clamp(20px,5vw,36px);margin-bottom:16px}
+.gate{text-align:center;padding:44px 22px;background:linear-gradient(140deg,var(--violet-soft),var(--teal-soft) 60%,transparent),var(--surface)}
+.gate h2,.done h2{font-family:var(--font-serif);font-weight:800;font-size:22px;letter-spacing:.03em;margin-bottom:8px}
+.gate p,.done p{color:var(--muted);font-size:14px;margin-bottom:22px}
+.gate .ai-btn{padding:13px 28px}
+.question{margin-bottom:30px}
+.question:last-child{margin-bottom:0}
+.question legend,.question>label{display:block;font-weight:700;font-size:15px;margin-bottom:12px;padding:0}
+.req{display:inline-flex;align-items:center;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--teal-soft);color:var(--teal);margin-left:8px;vertical-align:2px}
+.scale{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.scale input{position:absolute;opacity:0;pointer-events:none}
+.scale label{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:56px;padding:9px 4px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:rgba(11,14,26,.5);color:var(--muted);cursor:pointer;transition:border-color .2s,background .2s,color .2s;line-height:1.3}
+.scale label:hover{border-color:var(--violet);color:var(--text)}
+.scale label b{font:700 19px var(--font-latin)}
+.scale label span{font-size:12px;min-height:12px}
+.scale input:focus-visible+label{outline:2px solid var(--teal);outline-offset:2px}
+.scale input:checked+label{border-color:var(--teal);background:var(--teal-soft);color:var(--teal)}
+.ends{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:12px;margin-top:8px}
+.ends span:last-child{text-align:right}
+select,textarea{width:100%;background:rgba(11,14,26,.6);color:var(--text);border:1px solid var(--line-strong);border-radius:var(--radius-sm);padding:12px 14px;font:inherit;font-size:14px;transition:border-color .2s,box-shadow .2s}
+select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
+textarea{min-height:110px;resize:vertical}
+select:focus,textarea:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px var(--violet-soft)}
+textarea::placeholder{color:var(--faint)}
+.userline{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:13px;margin-bottom:16px}
+.userline b{color:var(--text)}
+.linkbtn{border:0;background:none;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;font-size:13px;padding:4px 0}
+.linkbtn:hover{color:var(--text)}
+.submit{width:100%;padding:15px 22px;font-size:16px}
+.error{color:#ffb3bb;font-size:13px;margin:12px 0 0}
+.error:empty{display:none}
+.done{text-align:center;padding:50px 22px}
+.done .mark{width:60px;height:60px;margin:0 auto 16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:var(--teal);background:var(--teal-soft);border:1px solid rgba(70,227,200,.4)}
+.hidden{display:none!important}
+@media(max-width:520px){.scale{gap:5px}.scale label{padding:8px 2px;min-height:52px}}
 </style></head>
-<body><div class="wrap"><header><div class="brand">AI STUDY / FEEDBACK</div><a class="back" href="./index.html">勉強会ページへ戻る</a></header>
-<main><div class="hero"><div class="eyebrow">Post-event survey</div><h1>参加後アンケート</h1><p id="eventLabel">AI勉強会へのご参加ありがとうございました。今後の企画づくりに、率直なご意見をお聞かせください。</p><div class="progress"><span id="progress"></span></div></div>
-<section class="card gate" id="gate"><h2>回答をはじめる</h2><p>社内Googleアカウントでログインしてください。<br>回答内容は勉強会の運営メンバーのみ確認できます。</p><button class="google" id="login">Googleでログイン</button><div class="error" id="gateError"></div></section>
+<body>
+<div id="ai-nav" data-page="survey"></div>
+<script src="./assets/nav.js"></script>
+<main class="ai-main"><div class="ai-wrap survey-wrap">
+<div class="ai-hero"><div class="ai-eyebrow">Post-event survey</div><h1 class="ai-title">参加後<span class="grad">アンケート</span></h1><p class="ai-lead" id="eventLabel">AI勉強会へのご参加ありがとうございました。今後の企画づくりに、率直なご意見をお聞かせください。</p><div class="progress"><span id="progress"></span></div></div>
+<section class="card gate" id="gate"><h2>回答をはじめる</h2><p>社内Googleアカウントでログインしてください。<br>回答内容は勉強会の運営メンバーのみ確認できます。</p><button class="ai-btn white" id="login">Googleでログイン</button><div class="error" id="gateError"></div></section>
 <form id="surveyForm" class="hidden">
 <div class="userline"><span><b id="userName"></b> さんとして回答中</span><button type="button" class="linkbtn" id="logout">別のアカウント</button></div>
 <section class="card" id="scaleCard"></section>
 <section class="card" id="otherCard"></section>
-<button class="submit" id="submit" type="submit">回答を送信する</button><div class="error" id="formError" role="alert"></div></form>
-<section class="card done hidden" id="done"><div class="mark">✓</div><h2>ご回答ありがとうございました</h2><p>いただいた声を、次回のAI勉強会づくりに活かします。</p><a href="./index.html">勉強会ページへ戻る</a></section>
-</main></div>
+<button class="ai-btn primary submit" id="submit" type="submit">回答を送信する</button><div class="error" id="formError" role="alert"></div></form>
+<section class="card done hidden" id="done"><div class="mark" aria-hidden="true">✓</div><h2>ご回答ありがとうございました</h2><p>いただいた声を、次回のAI勉強会づくりに活かします。</p><a class="ai-btn teal" href="./index.html">勉強会ページへ戻る</a></section>
+</div></main>
+<footer class="ai-footer"><div class="ai-wrap"><div>© 2026 AI Study — Internal use only</div><div class="latin">Powered by Firebase</div></div></footer>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";import{getAuth,GoogleAuthProvider,signInWithPopup,signOut,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";import{getFirestore,doc,getDoc,setDoc,serverTimestamp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";import{firebaseConfig}from"./firebase-config.js";import{normalizeSurveyQuestions}from"./survey-questions.js";
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app),provider=new GoogleAuthProvider(),$=id=>document.getElementById(id);let user,eventDate="",questions=normalizeSurveyQuestions(null);

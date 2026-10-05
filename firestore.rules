@@ -222,6 +222,24 @@ service cloud.firestore {
         && request.resource.data.by == aiStudyEmail();
     }
 
+    // ---------- 運営コンソール: AIツール利用者台帳（console.html） ----------
+    // ドキュメントIDは利用者のメール（小文字）。付与・変更・卒業の記録は管理者のみ
+    match /aiStudy_licenses/{email} {
+      allow read, write: if aiStudyIsAdmin();
+    }
+
+    // ---------- 運営コンソール: Slack #ask-ai勉強会 の自動確認結果 ----------
+    // 書き込みは Google Apps Script（gas/slack-monitor）が Firestore REST API で行う。
+    // GAS は IAM 権限で書き込むため、このルールの影響を受けない（ブラウザからは書けない）。
+    match /aiStudy_slackThreads/{threadId} {
+      allow read: if aiStudyIsAdmin();
+      allow write: if false;
+    }
+    match /aiStudy_slackSync/{docId} {
+      allow read: if aiStudyIsAdmin();
+      allow write: if false;
+    }
+
     // ---------- 上記以外は全拒否 ----------
     match /{document=**} {
       allow read, write: if false;
