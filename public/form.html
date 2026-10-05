@@ -4,104 +4,96 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI活用事例の投稿 | EXCEED GROUP</title>
+<link rel="stylesheet" href="./assets/theme.css">
 <style>
-  :root {
-    --ink:#0E1330; --ink2:#1A2150; --violet:#6C5CE7; --violet2:#8B7BF0;
-    --teal:#1FB6A6; --gold:#E0B341; --coral:#E8654F;
-    --paper:#F7F8FC; --card:#FFFFFF; --line:rgba(20,28,70,0.10);
-    --t1:#12173A; --t2:#5A6288; --t3:#9AA0C0;
-    --r:14px; --rs:10px;
-    --sans:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif;
-    --serif:'Hiragino Mincho ProN','Yu Mincho',serif;
-  }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:var(--sans); background:var(--paper); color:var(--t1); font-size:14px; -webkit-font-smoothing:antialiased; }
-  .wrap { max-width:680px; margin:0 auto; padding:0 20px 60px; }
-  .hero { background:linear-gradient(135deg,#0E1330 0%,#1A2150 55%,#2A2470 100%);
-    margin:0 -20px 26px; padding:34px 40px 30px; position:relative; overflow:hidden; }
-  .hero::before { content:''; position:absolute; top:-80px; right:-40px; width:280px; height:280px;
-    background:radial-gradient(circle,rgba(108,92,231,.55),transparent 70%); }
-  .hero-in { position:relative; z-index:1; max-width:640px; margin:0 auto; }
-  .eyebrow { font-size:11px; letter-spacing:.28em; color:var(--violet2); font-weight:700; margin-bottom:10px; }
-  .hero h1 { font-family:var(--serif); font-size:28px; font-weight:600; color:#fff; letter-spacing:.02em; line-height:1.3; }
-  .hero p { color:#B8BEE8; font-size:13px; margin-top:8px; line-height:1.6; }
-  .hero-top { display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:18px; }
-  .hero-top .eyebrow { margin-bottom:0; }
-  .hero-nav { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
-  .hero-link { color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.28); border-radius:999px; padding:8px 13px; font-size:12px; font-weight:700; white-space:nowrap; }
-  .hero-link:hover { background:rgba(255,255,255,.10); }
+  /* ページ固有（共通テーマ assets/theme.css の上に重ねる） */
+  .form-wrap { max-width:720px; }
 
   /* login gate */
-  .gate { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:32px 28px; text-align:center; }
-  .gate h2 { font-size:16px; font-weight:700; margin-bottom:8px; }
-  .gate p { font-size:13px; color:var(--t2); line-height:1.7; margin-bottom:20px; }
-  .g-btn { display:inline-flex; align-items:center; gap:10px; padding:12px 24px; border-radius:var(--rs);
-    background:#fff; border:1px solid var(--line); font-size:14px; font-weight:700; color:var(--t1); cursor:pointer;
-    box-shadow:0 1px 3px rgba(0,0,0,.06); font-family:var(--sans); }
-  .g-btn:hover { background:#F7F8FC; }
+  .gate { border:1px solid var(--line); border-radius:var(--radius); padding:34px 26px; text-align:center;
+    background:linear-gradient(140deg, rgba(139,124,255,.10), rgba(70,227,200,.06) 60%, transparent), var(--surface); }
+  .gate h2 { font-family:var(--font-serif); font-weight:800; font-size:22px; margin:0 0 8px; }
+  .gate p { font-size:14px; color:var(--muted); line-height:1.8; margin:0 0 22px; }
+  .g-btn { display:inline-flex; align-items:center; gap:10px; padding:12px 26px; border-radius:999px;
+    background:#fff; border:none; font-size:14px; font-weight:700; color:#1a1d29; cursor:pointer;
+    font-family:var(--font); transition:transform .18s, box-shadow .18s; box-shadow:0 8px 26px rgba(0,0,0,.25); }
+  .g-btn:hover { box-shadow:0 8px 26px rgba(139,124,255,.35); }
+  .g-btn:active { transform:scale(.97); }
+  .g-btn:focus-visible { outline:2px solid var(--teal); outline-offset:3px; }
   .g-btn svg { width:18px; height:18px; }
 
-  .who { background:#EAE7FC; border-radius:var(--rs); padding:11px 15px; font-size:13px; color:#4A3D9E;
-    margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+  /* form card */
+  .form-card { border:1px solid var(--line); border-radius:var(--radius); padding:24px 24px 26px;
+    background:linear-gradient(180deg, rgba(24,31,56,.75), rgba(18,23,43,.6)); }
+  .who { background:var(--violet-soft); border:1px solid rgba(139,124,255,.28); border-radius:var(--radius-sm);
+    padding:11px 15px; font-size:14px; color:var(--text); margin-bottom:22px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
   .who b { font-weight:700; }
-  .who .out { margin-left:auto; font-size:12px; color:var(--violet); cursor:pointer; text-decoration:underline; }
+  .who .dept { color:var(--muted); }
+  .who .out { margin-left:auto; font-size:13px; color:var(--violet); cursor:pointer; text-decoration:underline; }
 
-  .field { margin-bottom:18px; }
-  .field label { display:block; font-size:13px; font-weight:700; margin-bottom:7px; }
+  .field { margin-bottom:20px; }
+  .field label { display:block; font-size:14px; font-weight:700; margin-bottom:8px; }
   .req { color:var(--coral); margin-left:3px; font-size:12px; }
-  .hint { font-size:11px; color:var(--t3); font-weight:400; margin-left:6px; }
-  .field input[type=text], .field textarea, .field select {
-    width:100%; padding:11px 13px; font-size:14px; border:1px solid var(--line); border-radius:var(--rs);
-    background:#fff; color:var(--t1); font-family:var(--sans); outline:none; }
-  .field input:focus, .field textarea:focus, .field select:focus { border-color:var(--violet); box-shadow:0 0 0 3px rgba(108,92,231,.1); }
-  .field textarea { resize:vertical; min-height:90px; line-height:1.6; }
+  .hint { font-size:12px; color:var(--faint); font-weight:400; margin-left:6px; }
+  .field input[type=text], .field input[type=url], .field textarea, .field select, .time-inputs input {
+    width:100%; padding:11px 14px; font-size:15px; border:1px solid var(--line-strong); border-radius:var(--radius-sm);
+    background:rgba(11,14,26,.6); color:var(--text); font-family:var(--font); outline:none; transition:border-color .2s, box-shadow .2s; }
+  .field input::placeholder, .field textarea::placeholder, .time-inputs input::placeholder { color:var(--faint); }
+  .field input:focus, .field textarea:focus, .field select:focus, .time-inputs input:focus { border-color:var(--violet); box-shadow:0 0 0 3px var(--violet-soft); }
+  .field textarea { resize:vertical; min-height:110px; line-height:1.7; }
+  .field select { appearance:none; -webkit-appearance:none; padding-right:36px;
+    background-image:linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+    background-position:calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size:5px 5px; background-repeat:no-repeat; }
 
-  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .time-box { background:#F0F2FA; border-radius:var(--rs); padding:16px; margin-bottom:18px; }
-  .time-box .tt { font-size:13px; font-weight:700; margin-bottom:4px; }
-  .time-box .td { font-size:11px; color:var(--t2); margin-bottom:13px; line-height:1.5; }
+  .time-box { background:var(--teal-soft); border:1px solid rgba(70,227,200,.22); border-radius:var(--radius-sm); padding:16px 18px; margin-bottom:20px; }
+  .time-box .tt { font-size:14px; font-weight:700; margin-bottom:4px; }
+  .time-box .td { font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.7; }
   .time-inputs { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; gap:10px; align-items:end; }
+  .time-inputs > div { min-width:0; }
   @media (max-width:520px){ .time-inputs { grid-template-columns:1fr auto 1fr; } .time-inputs > :nth-child(4) { display:none; } .time-inputs > :nth-child(5) { grid-column:1 / -1; } }
-  .time-inputs .arrow { font-size:20px; color:var(--violet); padding-bottom:8px; }
-  .mini-label { font-size:11px; color:var(--t2); margin-bottom:5px; display:block; }
-  .preview { margin-top:12px; font-size:13px; font-weight:700; color:var(--teal); text-align:center; min-height:18px; }
+  .time-inputs .arrow { font-size:20px; color:var(--teal); padding-bottom:9px; }
+  .mini-label { font-size:12px; color:var(--muted); margin-bottom:5px; display:block; }
+  .preview { margin-top:12px; font-size:14px; font-weight:700; color:var(--teal); text-align:center; min-height:20px; }
 
   .stars { display:flex; gap:8px; }
-  .star { font-size:26px; cursor:pointer; color:#D5D8E8; user-select:none; }
-  .star.on { color:var(--gold); }
+  .star { font-size:28px; line-height:1; cursor:pointer; color:rgba(255,255,255,.14); user-select:none; transition:color .15s, text-shadow .15s; }
+  .star.on { color:var(--gold); text-shadow:0 0 14px rgba(242,196,90,.45); }
 
-  .submit { width:100%; padding:14px; background:var(--violet); color:#fff; border:none; border-radius:var(--rs);
-    font-size:15px; font-weight:700; cursor:pointer; font-family:var(--sans); margin-top:8px; letter-spacing:.02em; }
-  .submit:hover { background:#5a4bd4; }
+  .submit { width:100%; padding:15px; border:none; border-radius:999px; color:#fff;
+    background:linear-gradient(120deg, var(--violet), #a99bff); box-shadow:0 8px 26px rgba(139,124,255,.28);
+    font-size:15px; font-weight:700; cursor:pointer; font-family:var(--font); margin-top:8px; letter-spacing:.02em; transition:transform .18s, opacity .18s; }
+  .submit:hover { box-shadow:0 10px 30px rgba(139,124,255,.4); }
+  .submit:active { transform:scale(.98); }
   .submit:disabled { opacity:.5; cursor:not-allowed; }
 
-  .done { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:40px 28px; text-align:center; }
+  .done { border:1px solid var(--line); border-radius:var(--radius); padding:42px 26px; text-align:center;
+    background:linear-gradient(140deg, rgba(139,124,255,.10), rgba(70,227,200,.06) 60%, transparent), var(--surface); }
   .done .ic { font-size:44px; margin-bottom:14px; }
-  .done h2 { font-size:19px; font-weight:700; margin-bottom:10px; }
-  .done p { font-size:13px; color:var(--t2); line-height:1.7; margin-bottom:22px; }
-  .done .lnk { display:inline-block; margin:0 8px; padding:10px 20px; border-radius:var(--rs);
-    font-size:13px; font-weight:700; text-decoration:none; }
-  .done .lnk.p { background:var(--violet); color:#fff; }
-  .done .lnk.s { background:#EEF0F6; color:var(--t1); }
+  .done h2 { font-family:var(--font-serif); font-weight:800; font-size:22px; margin:0 0 10px; }
+  .done p { font-size:14px; color:var(--muted); line-height:1.8; margin:0 0 22px; }
+  .done .lnks { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; }
+  .done .lnk { display:inline-flex; align-items:center; justify-content:center; padding:11px 22px; border-radius:999px;
+    font-size:14px; font-weight:700; text-decoration:none; }
+  .done .lnk.p { background:linear-gradient(120deg, var(--violet), #a99bff); color:#fff; box-shadow:0 8px 26px rgba(139,124,255,.28); }
+  .done .lnk.s { border:1px solid var(--line-strong); color:var(--text); }
+  .done .lnk.s:hover { border-color:var(--violet); }
   .hidden { display:none !important; }
-  .err { color:var(--coral); font-size:12px; margin-top:6px; }
-  @media(max-width:600px) {
-    .hero { padding:24px 20px 30px; }
-    .hero-top { align-items:flex-start; flex-direction:column; }
-    .hero-nav { justify-content:flex-start; }
-  }
+  .err { color:#ffb3bb; font-size:13px; margin-top:8px; }
+  .err:empty { display:none; }
+  @media (max-width:560px){ .form-card { padding:20px 16px 22px; } .gate, .done { padding:28px 18px; } }
 </style>
 </head>
 <body>
-<div class="hero">
-  <div class="hero-in">
-    <div class="hero-top"><div class="eyebrow">EXCEED GROUP &nbsp;/&nbsp; AI ACTIVATION</div><nav class="hero-nav" aria-label="ページナビゲーション"><a class="hero-link" href="./index.html">AI勉強会</a><a class="hero-link" href="./board.html">アイデア掲示板</a><a class="hero-link" href="./dashboard.html">ダッシュボード →</a></nav></div>
-    <h1>AI活用事例を投稿する</h1>
-    <p>あなたの「AIでこう変わった」を共有してください。<br>ダッシュボードに反映され、みんなの参考になります。</p>
-  </div>
-</div>
+<div id="ai-nav" data-page="form"></div>
+<script src="./assets/nav.js"></script>
 
-<div class="wrap">
+<main class="ai-main">
+<div class="ai-wrap form-wrap">
+  <section class="ai-hero">
+    <div class="ai-eyebrow">Share your case</div>
+    <h1 class="ai-title">AI活用事例を<span class="grad">投稿する</span></h1>
+    <p class="ai-lead">あなたの「AIでこう変わった」を共有してください。<br>ダッシュボードに反映され、みんなの参考になります。</p>
+  </section>
 
   <!-- ログイン前 -->
   <div id="gate" class="gate">
@@ -115,9 +107,9 @@
   </div>
 
   <!-- フォーム本体 -->
-  <div id="form" class="hidden">
+  <div id="form" class="form-card hidden">
     <div class="who">
-      投稿者：<b id="who-name"></b><span id="who-dept" style="color:#6B5FC0"></span>
+      投稿者：<b id="who-name"></b><span id="who-dept" class="dept"></span>
       <span class="out" id="logout">別のアカウント</span>
     </div>
 
@@ -217,11 +209,14 @@
     <div class="ic">🎉</div>
     <h2>投稿ありがとうございました！</h2>
     <p>あなたの事例がダッシュボードに反映されました。<br>ぜひ他のメンバーの事例も見てみてください。</p>
-    <a href="./dashboard.html" class="lnk p">ダッシュボードを見る</a>
-    <a href="#" class="lnk s" id="again">もう1件投稿する</a>
+    <div class="lnks">
+      <a href="./dashboard.html" class="lnk p">ダッシュボードを見る</a>
+      <a href="#" class="lnk s" id="again">もう1件投稿する</a>
+    </div>
   </div>
 
 </div>
+</main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";

@@ -17,6 +17,7 @@
 | **活用ダッシュボード** | https://exg-sec-create.github.io/ai-study-lp/dashboard.html | 事例・削減時間・ランキングの可視化 |
 | **社内AI活用レベル診断** | https://exg-sec-create.github.io/ai-study-lp/ai-diagnosis.html | AI活用レベルの診断（Googleログイン） |
 | **診断結果集計** | https://exg-sec-create.github.io/ai-study-lp/ai-diagnosis-results.html | 診断結果の集計・CSV出力（管理者のみ） |
+| **運営コンソール** | https://exg-sec-create.github.io/ai-study-lp/console.html | 権限マップ・メールでのアクセス確認・権限設定・AIツール利用者台帳・Slack相談の対応状況（管理者のみ） |
 | **AIアンバサダー運用設計** | https://exg-sec-create.github.io/ai-study-lp/ambassador.html | 制度の提案・運用マップ（RULE/STANDARD/PLAYBOOK）。提案モード／修正モード（管理者＋閲覧許可者のみ） |
 | **社員マスタ管理** | https://exg-sec-create.github.io/ai-study-lp/employees.html | 事例投稿の氏名・部門判定に使う社員マスタの登録（管理者のみ） |
 
@@ -46,8 +47,11 @@ ai-study-lp/
 │   ├── form.html           事例投稿フォーム
 │   ├── dashboard.html      活用ダッシュボード
 │   ├── ambassador.html     AIアンバサダー運用設計（提案／修正モード）
+│   ├── console.html        運営コンソール
+│   ├── assets/             共通テーマ（theme.css）・共通ヘッダー（nav.js）
 │   ├── employees.html      社員マスタ管理
 │   └── firebase-config.js  Firebase接続設定
+├── gas/slack-monitor/      Slack #ask-ai勉強会 自動確認（Google Apps Script）
 ├── firestore.rules         Firestoreセキュリティルール
 ├── firebase.json           Firebase設定
 └── README.md               このファイル
@@ -131,6 +135,20 @@ node -v        # v18以上
 - **閲覧者の追加**：ページ内「管理・履歴」タブ、または `aiStudy_settings/access` の `proposalViewers` 配列にメールを追加。
 - **初回の取り込み**：修正モードの「JSON読込」で、社長室保管の初期データ（リポジトリ外）を読み込んで保存します。
 - **ローカル確認**：`public/ambassador-seed.local.json` を置き、`http://localhost:<port>/ambassador.html?local=1` で開くとログインなしで表示できます（`*.local.json` はgitignore済み）。
+
+---
+
+## 🧭 運営コンソール（console.html）
+
+- **権限マップ・確認**：ページ×権限の一覧と、メールアドレス（または氏名）を入れると「その人が見られるページ／見られないページ」と理由を表示。
+- **権限の設定**：管理者・出欠メンバー・提案ページ閲覧の3つをチップで追加／削除（`aiStudy_settings/access`）。
+- **ツール利用者**：ChatGPT Business／Claude Team の付与記録（`aiStudy_licenses/{email}`）。事例数・月間削減時間・Slack回答数・診断レベルを自動集計し、「付与90日・事例ゼロ」などの要フォローを表示。
+- **Slack相談の対応状況**：`gas/slack-monitor` が1時間ごとに #ask-ai勉強会 を読み、回答者・✅解決・未回答を記録（`aiStudy_slackThreads`）。設定手順は [gas/slack-monitor/README.md](./gas/slack-monitor/README.md)。
+
+## 🎨 デザイン
+
+- 全ページ共通の配色・部品は `public/assets/theme.css`、共通ヘッダーは `public/assets/nav.js`。
+- 新しいページは `<link rel="stylesheet" href="./assets/theme.css">` と、`<body>` 先頭に `<div id="ai-nav" data-page="キー"></div><script src="./assets/nav.js"></script>` を置く。
 
 ---
 

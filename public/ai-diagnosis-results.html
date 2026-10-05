@@ -1,6 +1,56 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI QUEST｜診断集計</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@600;800&family=Noto+Sans+JP:wght@400;600;800&display=swap" rel="stylesheet"><style>
-:root{--ink:#14212b;--muted:#69757e;--paper:#f4f2eb;--card:#fff;--lime:#c9ff53;--purple:#7358ff;--line:#dfe2dc}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",sans-serif}.wrap{width:min(1120px,calc(100% - 32px));margin:auto;padding:28px 0 70px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:55px}.logo{font:800 16px "DM Sans"}.logo:before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--lime);border:2px solid var(--ink);margin-right:8px}.tag{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:7px 12px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:28px}.hero h1{font-size:clamp(35px,7vw,66px);letter-spacing:-.05em;margin:0}.hero p{color:var(--muted);margin:8px 0}.btn{border:2px solid var(--ink);border-radius:10px;background:var(--lime);box-shadow:3px 3px 0 var(--ink);padding:11px 16px;font-weight:800;cursor:pointer}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.card{background:#fff;border:1px solid var(--line);border-radius:17px;padding:20px}.metric b{font:800 38px "DM Sans";display:block}.metric span{font-size:12px;color:var(--muted)}.wide{grid-column:span 2}.section{margin-top:14px}.section h2{font-size:17px;margin-top:0}.levels{display:flex;align-items:end;gap:9px;height:180px;padding-top:20px}.level{flex:1;text-align:center}.level i{display:block;background:var(--purple);height:var(--h);min-height:3px;border-radius:7px 7px 0 0}.level b{font:700 12px "DM Sans"}.level small{display:block;color:var(--muted)}.interest{display:grid;gap:12px}.interest-row{display:grid;grid-template-columns:150px 1fr 30px;gap:8px;align-items:center;font-size:12px}.track{height:9px;background:#eee;border-radius:9px;overflow:hidden}.track i{display:block;height:100%;background:var(--lime);width:var(--w)}.tablecard{margin-top:14px;overflow:auto}table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:13px}th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line)}th{font-size:10px;letter-spacing:.1em;color:var(--muted)}.lv{font:800 12px "DM Sans";background:#eeeaff;color:var(--purple);padding:5px 9px;border-radius:99px}.gate{text-align:center;max-width:580px;margin:15vh auto;background:#fff;border:2px solid var(--ink);border-radius:20px;padding:45px;box-shadow:6px 6px 0 var(--ink)}.gate p,.state{color:var(--muted)}.detailbtn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 10px;cursor:pointer;font-weight:700}.growth{font-weight:800}.growth.up{color:#23834a}.growth.down{color:#c34b3d}.answer-detail td{background:#f8f7f3;white-space:normal}.answer-grid{display:grid;grid-template-columns:repeat(2,minmax(240px,1fr));gap:10px;padding:8px}.answer-item{border:1px solid var(--line);background:#fff;border-radius:10px;padding:10px}.answer-item b{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}.hidden{display:none!important}@media(max-width:750px){.grid{grid-template-columns:repeat(2,1fr)}.wide{grid-column:span 2}.hero{align-items:flex-start;flex-direction:column}.interest-row{grid-template-columns:110px 1fr 25px}}@media(max-width:430px){.grid{grid-template-columns:1fr}.wide{grid-column:span 1}.answer-grid{grid-template-columns:1fr}}
-</style></head><body><div class="wrap"><header class="top"><div class="logo">AI QUEST / INSIGHTS</div><span class="tag">ADMIN ONLY</span></header><section id="gate" class="gate"><h1>集計ページ</h1><p>診断結果は管理者のみ閲覧できます。社内Googleアカウントでログインしてください。</p><button id="login" class="btn">Googleでログイン</button><p id="error"></p></section><main id="dashboard" class="hidden"><div class="hero"><div><h1>AI活用レポート</h1><p id="updated">最新回答を集計しています</p></div><button id="csv" class="btn">CSVダウンロード ↓</button></div><div class="grid"><div class="card metric"><b id="total">0</b><span>回答者数</span></div><div class="card metric"><b id="average">—</b><span>平均レベル</span></div><div class="card metric"><b id="daily">—</b><span>1日3回以上の利用者</span></div><div class="card metric"><b id="want">—</b><span>有料AIに関心あり</span></div><div class="card wide section"><h2>レベル分布</h2><div id="levels" class="levels"></div></div><div class="card wide section"><h2>ChatGPT / Claude 利用状況・希望</h2><div id="interest" class="interest"></div></div></div><div class="card tablecard"><h2>回答一覧</h2><table><thead><tr><th>氏名</th><th>部署</th><th>レベル</th><th>スコア</th><th>前回比</th><th>利用頻度</th><th>有料AI利用状況・希望</th><th>利用アカウント</th><th>回答日時</th><th>全回答</th></tr></thead><tbody id="rows"></tbody></table><p id="empty" class="state"></p></div></main></div>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI QUEST｜診断集計</title>
+<link rel="stylesheet" href="./assets/theme.css">
+<style>
+button{font:inherit}
+.gate{text-align:center;max-width:580px;margin:40px auto 0}
+.gate h1{font-family:var(--font-serif);font-weight:800;font-size:clamp(24px,4vw,32px);margin:0 0 10px}
+.gate p,.state{color:var(--muted)}
+#error{color:var(--coral);margin:14px 0 0}
+.hero-row{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;flex-wrap:wrap}
+.btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;background:linear-gradient(120deg,var(--violet),#a99bff);color:#fff;box-shadow:0 8px 26px rgba(139,124,255,.28);border-radius:999px;padding:11px 22px;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:2px solid var(--teal);outline-offset:3px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.grid .ai-card+.ai-card{margin-top:0}
+.grid .ai-card{padding:20px;min-width:0}
+.metric b{font:700 36px/1.2 var(--font-latin);display:block}
+.metric span{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.metric.accent b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.wide{grid-column:span 2}
+.section h2,.tablecard h2{font-family:var(--font-serif);font-weight:800;font-size:18px;margin:0 0 6px}
+.levels{display:flex;align-items:flex-end;gap:9px;height:180px;padding-top:20px}
+.level{flex:1;text-align:center;min-width:0}
+.level i{display:block;background:var(--grad);height:var(--h);min-height:3px;border-radius:7px 7px 0 0;opacity:.9}
+.level b{font:700 12px var(--font-latin);display:block;margin-top:6px}
+.level small{display:block;color:var(--muted);font-size:11px}
+.interest{display:grid;gap:12px;margin-top:12px}
+.interest-row{display:grid;grid-template-columns:150px minmax(0,1fr) 30px;gap:8px;align-items:center;font-size:13px}
+.interest-row b{font-family:var(--font-latin);text-align:right}
+.track{height:9px;background:rgba(255,255,255,.07);border-radius:9px;overflow:hidden}
+.track i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),#8bffd9);width:var(--w)}
+.tablecard{margin-top:14px}
+.tablecard .ai-table-wrap{margin-top:12px}
+.tablecard table{white-space:nowrap}
+.lv{font:700 12px var(--font-latin);background:var(--violet-soft);color:var(--violet);padding:4px 10px;border-radius:99px}
+.detailbtn{border:1px solid var(--line-strong);background:transparent;color:var(--text);border-radius:999px;padding:5px 12px;cursor:pointer;font-weight:700;font-size:12px}
+.detailbtn:hover{border-color:var(--violet)}
+.growth{font-weight:700}
+.growth.up{color:var(--teal)}
+.growth.down{color:var(--coral)}
+.answer-detail td{background:rgba(255,255,255,.02);white-space:normal}
+.answer-grid{display:grid;grid-template-columns:repeat(2,minmax(240px,1fr));gap:10px;padding:8px}
+.answer-item{border:1px solid var(--line);background:rgba(11,14,26,.4);border-radius:10px;padding:10px 12px;font-size:13px}
+.answer-item b{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}
+.hidden{display:none!important}
+@media(max-width:750px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wide{grid-column:span 2}.interest-row{grid-template-columns:110px minmax(0,1fr) 25px}}
+@media(max-width:430px){.grid{grid-template-columns:1fr}.wide{grid-column:span 1}.answer-grid{grid-template-columns:1fr}.metric b{font-size:30px}.hero-row .btn{width:100%}}
+</style></head><body>
+<div id="ai-nav" data-page="diagnosis-results"></div>
+<script src="./assets/nav.js"></script>
+<div class="ai-main"><div class="ai-wrap">
+<section id="gate" class="ai-card glow gate"><span class="ai-tag">ADMIN ONLY</span><h1 style="margin-top:14px">集計ページ</h1><p>診断結果は管理者のみ閲覧できます。社内Googleアカウントでログインしてください。</p><button id="login" class="btn">Googleでログイン</button><p id="error"></p></section>
+<main id="dashboard" class="hidden"><div class="ai-hero hero-row"><div><div class="ai-eyebrow">AI Quest / Insights</div><h1 class="ai-title">AI活用<span class="grad">レポート</span></h1><p id="updated" class="ai-lead">最新回答を集計しています</p></div><button id="csv" class="btn">CSVダウンロード ↓</button></div><div class="grid"><div class="ai-card metric accent"><b id="total">0</b><span>回答者数</span></div><div class="ai-card metric"><b id="average">—</b><span>平均レベル</span></div><div class="ai-card metric"><b id="daily">—</b><span>1日3回以上の利用者</span></div><div class="ai-card metric"><b id="want">—</b><span>有料AIに関心あり</span></div><div class="ai-card wide section"><h2>レベル分布</h2><div id="levels" class="levels"></div></div><div class="ai-card wide section"><h2>ChatGPT / Claude 利用状況・希望</h2><div id="interest" class="interest"></div></div></div><div class="ai-card tablecard"><h2>回答一覧</h2><div class="ai-table-wrap"><table class="ai-table"><thead><tr><th>氏名</th><th>部署</th><th>レベル</th><th>スコア</th><th>前回比</th><th>利用頻度</th><th>有料AI利用状況・希望</th><th>利用アカウント</th><th>回答日時</th><th>全回答</th></tr></thead><tbody id="rows"></tbody></table></div><p id="empty" class="state"></p></div></main>
+</div></div>
 <script type="module">
 import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import{getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged}from"https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";

@@ -4,51 +4,49 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>社員マスタ管理 | EXCEED GROUP</title>
+<title>社員マスタ管理 | AI STUDY</title>
+<link rel="stylesheet" href="./assets/theme.css">
 <style>
-  :root { --ink:#0E1330; --violet:#6C5CE7; --teal:#1FB6A6; --coral:#E8654F; --paper:#F7F8FC; --card:#fff; --line:rgba(20,28,70,.12); --t1:#12173A; --t2:#5A6288; }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --paper:#0B0E1A; --card:#141A30; --line:rgba(235,239,255,.12); --t1:#ECEFF8; --t2:#A4ABC8; } }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif; background:var(--paper); color:var(--t1); font-size:14px; line-height:1.7; }
-  .wrap { max-width:860px; margin:0 auto; padding:24px 16px 60px; }
-  h1 { font-size:22px; } p { color:var(--t2); font-size:13px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; margin-top:16px; }
-  textarea { width:100%; min-height:220px; border:1px solid var(--line); border-radius:10px; padding:10px; font-family:ui-monospace,monospace; font-size:12px; background:var(--card); color:var(--t1); }
-  .btn { border:1px solid var(--line); background:var(--card); color:var(--t1); border-radius:999px; padding:9px 18px; font-weight:700; cursor:pointer; margin-top:10px; }
-  .btn.primary { background:var(--violet); border-color:var(--violet); color:#fff; }
+  .hidden { display:none !important; }
+  textarea.ai-input { min-height:220px; font-family:ui-monospace,Menlo,monospace; font-size:12px; }
   .msg { margin-top:10px; font-size:13px; } .ok { color:var(--teal); } .err { color:var(--coral); }
-  table { width:100%; border-collapse:collapse; font-size:12px; margin-top:10px; } td, th { border-bottom:1px solid var(--line); padding:6px; text-align:left; }
-  .hidden { display:none; } a { color:var(--violet); }
+  code { font-family:ui-monospace,Menlo,monospace; font-size:12px; background:rgba(255,255,255,.06); padding:1px 6px; border-radius:6px; }
+  .acts { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <a href="./admin.html">← 管理者ページ</a>
-  <h1 style="margin-top:10px">社員マスタ管理</h1>
-  <p>事例投稿フォームで氏名・部門を自動判定するための社員マスタ（Firestore <code>aiStudy_employees</code>）を登録します。個人情報をコードに書かずに済むよう、データはここからFirestoreにだけ保存します。管理者（admins）のみ利用できます。</p>
+<div id="ai-nav" data-page="employees"></div>
+<script src="./assets/nav.js"></script>
+<main class="ai-main"><div class="ai-wrap">
+  <section class="ai-hero">
+    <div class="ai-eyebrow">Employee Master</div>
+    <h1 class="ai-title">社員<span class="grad">マスタ</span></h1>
+    <p class="ai-lead">事例投稿フォームで氏名・部門を自動判定するための社員マスタ（Firestore <code>aiStudy_employees</code>）を登録します。個人情報をコードに書かずに済むよう、データはここからFirestoreにだけ保存します。管理者のみ利用できます。</p>
+  </section>
 
-  <div id="gate" class="card">
-    <button class="btn primary" id="login">Googleでログイン</button>
+  <div id="gate" class="ai-card ai-gate">
+    <h2>管理者ログイン</h2>
+    <button class="ai-btn white" id="login" type="button">Googleでログイン</button>
     <div class="msg err" id="gate-msg"></div>
   </div>
 
   <div id="app" class="hidden">
-    <div class="card">
+    <div class="ai-card">
       <h3>CSVを貼り付けて登録</h3>
-      <p>1行目は見出し <code>email,name,dept,role</code>。同じメールの人は上書きされます。</p>
-      <textarea id="csv" placeholder="email,name,dept,role&#10;taro@example.com,山田 太郎,営業,"></textarea>
-      <button class="btn" id="preview">確認する</button>
-      <div id="preview-box"></div>
-      <button class="btn primary hidden" id="save">この内容で登録する</button>
+      <p style="color:var(--muted);font-size:13px;margin:0 0 10px">1行目は見出し <code>email,name,dept,role</code>。同じメールの人は上書きされます。</p>
+      <textarea class="ai-input" id="csv" placeholder="email,name,dept,role&#10;taro@example.com,山田 太郎,営業,"></textarea>
+      <div class="acts"><button class="ai-btn" id="preview" type="button">確認する</button>
+      <button class="ai-btn primary hidden" id="save" type="button">この内容で登録する</button></div>
+      <div id="preview-box" style="margin-top:12px"></div>
       <div class="msg" id="msg"></div>
     </div>
-    <div class="card">
+    <div class="ai-card">
       <h3>登録済み <span id="count"></span></h3>
-      <button class="btn" id="load">一覧を表示</button>
-      <div id="list"></div>
+      <button class="ai-btn sm" id="load" type="button">一覧を表示</button>
+      <div id="list" style="margin-top:12px"></div>
     </div>
   </div>
-</div>
+</div></main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
@@ -77,7 +75,7 @@ function parseCsv(text){
 }
 $('preview').onclick = () => {
   rows = parseCsv($('csv').value);
-  $('preview-box').innerHTML = rows.length ? `<table><tr><th>email</th><th>氏名</th><th>部門</th><th>役職</th></tr>${rows.map(r=>`<tr><td>${esc(r.email)}</td><td>${esc(r.name)}</td><td>${esc(r.dept)}</td><td>${esc(r.role)}</td></tr>`).join('')}</table>` : '<p class="err">登録できる行がありません。</p>';
+  $('preview-box').innerHTML = rows.length ? `<div class="ai-table-wrap"><table class="ai-table"><tr><th>email</th><th>氏名</th><th>部門</th><th>役職</th></tr>${rows.map(r=>`<tr><td>${esc(r.email)}</td><td>${esc(r.name)}</td><td>${esc(r.dept)}</td><td>${esc(r.role)}</td></tr>`).join('')}</table></div>` : '<p class="err">登録できる行がありません。</p>';
   $('save').classList.toggle('hidden', !rows.length);
   $('msg').textContent = rows.length ? `${rows.length}件を登録します。内容を確認してください。` : '';
 };
@@ -97,7 +95,7 @@ $('save').onclick = async () => {
 $('load').onclick = async () => {
   const snap = await getDocs(collection(db, 'aiStudy_employees'));
   $('count').textContent = `（${snap.size}件）`;
-  $('list').innerHTML = `<table><tr><th>email</th><th>氏名</th><th>部門</th><th>役職</th></tr>${snap.docs.map(d=>{ const x = d.data(); return `<tr><td>${esc(d.id)}</td><td>${esc(x.name)}</td><td>${esc(x.dept)}</td><td>${esc(x.role)}</td></tr>`; }).join('')}</table>`;
+  $('list').innerHTML = `<div class="ai-table-wrap"><table class="ai-table"><tr><th>email</th><th>氏名</th><th>部門</th><th>役職</th></tr>${snap.docs.map(d=>{ const x = d.data(); return `<tr><td>${esc(d.id)}</td><td>${esc(x.name)}</td><td>${esc(x.dept)}</td><td>${esc(x.role)}</td></tr>`; }).join('')}</table></div>`;
 };
 </script>
 </body>
