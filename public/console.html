@@ -56,7 +56,7 @@
   .filters { display:flex; gap:6px; flex-wrap:wrap; margin:16px 0 10px; align-items:center; }
   .fchip { border:1px solid var(--line-strong); background:none; color:var(--muted); border-radius:999px; padding:5px 12px; font-size:12px; cursor:pointer; font-family:inherit; }
   .fchip.on { color:var(--text); background:var(--violet-soft); border-color:var(--violet); }
-  .lic td .nm { font-weight:700; } .lic td .sub { font-size:11px; color:var(--muted); }
+  .ai-table td .nm { font-weight:700; } .ai-table td .sub { font-size:11px; color:var(--muted); line-height:1.5; }
   .warn { color:var(--gold); font-size:12px; }
   .form-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
   .form-grid .ai-field { margin:0; }
@@ -114,9 +114,11 @@
       <div class="ai-tabs" role="tablist">
         <button class="ai-tab on" data-tab="t-access" type="button">権限マップ・確認</button>
         <button class="ai-tab" data-tab="t-roles" type="button">権限の設定</button>
-        <button class="ai-tab" data-tab="t-license" type="button">ツール利用者</button>
-        <button class="ai-tab" data-tab="t-slack" type="button">Slack相談の対応状況</button>
-        <button class="ai-tab" data-tab="t-setup" type="button">連携の設定</button>
+        <button class="ai-tab" data-tab="t-license" type="button">アンバサダー名簿</button>
+        <button class="ai-tab" data-tab="t-judge" type="button">判定（卒業・足切り）</button>
+        <button class="ai-tab" data-tab="t-cand" type="button">候補者分析</button>
+        <button class="ai-tab" data-tab="t-slack" type="button">Slack相談</button>
+        <button class="ai-tab" data-tab="t-setup" type="button">週次解析について</button>
       </div>
 
       <!-- ① 権限マップ・確認 -->
@@ -152,15 +154,40 @@
 
       <!-- ③ ツール利用者 -->
       <section class="panel" id="t-license">
-        <div class="ai-sec-head"><h2>AIツール利用者</h2><span class="en">License holders</span>
-          <p>付与した人の記録と活用状況です。事例・削減時間・Slackの対応数・診断レベルは自動で集計します。実際のアカウント発行・停止は各ツールの管理画面で行ってください。</p></div>
+        <div class="ai-sec-head"><h2>アンバサダー名簿</h2><span class="en">Ambassadors</span>
+          <p>任命した人と付与したAIツールの記録です。事例・削減時間・勉強会での発表・Slackの対応数・診断レベルを自動で集計します。実際のアカウント発行・停止は各ツールの管理画面で行ってください。</p></div>
         <div class="seats" id="seats"></div>
         <div class="filters" id="lic-filters"></div>
         <div class="ai-table-wrap"><table class="ai-table lic" id="lic-table"></table></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
-          <button class="ai-btn primary" id="lic-add" type="button">＋ 利用者を追加（付与を記録）</button>
+          <button class="ai-btn primary" id="lic-add" type="button">＋ アンバサダーを任命（付与を記録）</button>
           <button class="ai-btn" id="lic-csv" type="button">CSVで書き出す</button>
           <button class="ai-btn" id="seat-edit" type="button">枠数を変更</button>
+        </div>
+      </section>
+
+      <!-- 判定 -->
+      <section class="panel" id="t-judge">
+        <div class="ai-sec-head"><h2>判定（卒業・足切り）</h2><span class="en">Half-year review</span>
+          <p>STANDARD（運用設計）の基準で、期間中の実績から判定の目安を出します。月次は数字の確認だけにし、昇格・卒業は半期で決めます。最終判断は面談のうえ「判定を記録」してください。</p></div>
+        <div class="ai-card">
+          <div class="filters" style="margin:0"><span class="ai-label" style="margin:0 6px 0 0">判定期間</span><span id="judge-periods"></span>
+            <button class="ai-btn sm" id="judge-config" type="button" style="margin-left:auto">基準を変更</button></div>
+          <div id="judge-rule" style="color:var(--muted);font-size:12px;margin-top:10px"></div>
+        </div>
+        <div class="ai-stats" id="judge-stats" style="margin-top:14px"></div>
+        <div class="ai-table-wrap" style="margin-top:14px"><table class="ai-table" id="judge-table"></table></div>
+      </section>
+
+      <!-- 候補者分析 -->
+      <section class="panel" id="t-cand">
+        <div class="ai-card glow" id="insight-card"></div>
+        <div class="ai-sec" style="padding-bottom:0">
+          <div class="ai-sec-head"><h2>アンバサダー候補</h2><span class="en">Candidates</span>
+            <p>まだアンバサダーでない社員を、参加・事例・診断・姿勢（共有・挑戦）・Slackでの助け合いの5つで点数化しています。点数は目安です。Claudeの所見（考え方・意欲）とあわせて判断してください。</p></div>
+          <div class="filters" id="cand-filters" style="margin-top:0"></div>
+          <div class="ai-table-wrap"><table class="ai-table" id="cand-table"></table></div>
+          <p style="color:var(--faint);font-size:12px;margin-top:8px" id="cand-note"></p>
         </div>
       </section>
 
@@ -178,19 +205,19 @@
         <div class="ai-card" style="margin-top:14px"><h3>最近の質問</h3><div id="slack-recent"></div></div>
       </section>
 
-      <!-- ⑤ 連携の設定 -->
+      <!-- ⑤ 週次解析について -->
       <section class="panel" id="t-setup">
         <div class="ai-grid2">
           <div class="ai-card">
-            <h3>Slack #ask-ai勉強会 の自動確認（Google Apps Script）</h3>
-            <p style="color:var(--muted);font-size:13px;margin:0 0 14px">1時間ごとにシステムがチャンネルを読み、「質問・回答した人・✅が付いた回答」を記録します。担当者がスタンプを数える必要はありません。一度設定すれば、あとは自動で動きます。</p>
+            <h3>Claudeの週次解析（毎週月曜 9:00）</h3>
+            <p style="color:var(--muted);font-size:13px;margin:0 0 14px">新しいツール（GAS・スプレッドシート・Slackアプリ）は使いません。週に1回、Claudeが次の手順で解析し、結果をこのコンソールに反映します。担当者の作業は「結果を見て判断する」だけです。</p>
             <ol class="steps">
-              <li><b>Slackアプリを作る（社内専用）</b><span><a href="https://api.slack.com/apps" target="_blank" rel="noopener">api.slack.com/apps</a> → Create New App → From scratch。Bot Token Scopes に <code>channels:history</code> <code>channels:read</code> <code>reactions:read</code> <code>users:read</code> <code>users:read.email</code>（未回答のお知らせも使う場合は <code>chat:write</code>）を追加してインストール。</span></li>
-              <li><b>Botをチャンネルに招待</b><span>#ask-ai勉強会 で <code>/invite @アプリ名</code></span></li>
-              <li><b>Apps Script を作る</b><span>Googleドライブで新しいApps Scriptを作成し、リポジトリの <code>gas/slack-monitor/</code> の <code>Code.gs</code> と <code>appsscript.json</code> を貼り付け。</span></li>
-              <li><b>スクリプトプロパティを設定</b><span><code>SLACK_BOT_TOKEN</code>（xoxb-…）を登録。チャンネルIDとFirebaseプロジェクトは設定済み。</span></li>
-              <li><b><code>setup</code> を1回実行</b><span>権限を許可すると、1時間ごとの自動実行が登録されます。このページの「Slack相談の対応状況」に結果が出れば完了。</span></li>
+              <li><b>Slackを読む</b><span>Slackコネクタで #ask-ai勉強会 の投稿・スレッド・✅を読み、「質問／案内／共有」に分類します。</span></li>
+              <li><b>活動データを読む</b><span>事例・出欠・アンケート・診断・名簿をFirestoreから読みます。</span></li>
+              <li><b>所見を書く</b><span>未回答の質問、よく出るテーマ、アンバサダー候補とその理由（考え方・意欲）、運営への提案をまとめます。</span></li>
+              <li><b>コンソールに反映</b><span>「Slack相談」「候補者分析」に表示されます。</span></li>
             </ol>
+            <div id="sync-detail" class="ai-note"></div>
           </div>
           <div class="ai-card">
             <h3>相談チャンネルのルール（周知用）</h3>
@@ -198,9 +225,8 @@
               <li>質問は <b style="color:var(--text)">#ask-ai勉強会</b> に投稿する</li>
               <li>回答は必ず<b style="color:var(--text)">スレッドで</b>返す</li>
               <li>解決したら、質問した人が<b style="color:var(--text)">役に立った回答に ✅</b> を付ける</li>
-              <li>回答がない質問は、翌日にシステムがチャンネルへお知らせする（任意設定）</li>
             </ul>
-            <div class="ai-note" style="margin-top:14px">記録されるのは、このチャンネルの投稿だけです。DMやほかのチャンネルは読みません。</div>
+            <div class="ai-note" style="margin-top:14px">解析は、このMacの Claude デスクトップアプリの「スケジュール」機能で動きます。Macがスリープ中の場合は、次に起動したときに実行されます。手順は <code>tools/claude-weekly/PROMPT.md</code> にあり、誰が担当しても同じ手順で動きます。</div>
             <a class="ai-btn teal" style="margin-top:14px" href="https://slack.com/app_redirect?channel=C0BU68QP8M6" target="_blank" rel="noopener">#ask-ai勉強会 を開く ↗</a>
           </div>
         </div>
@@ -219,8 +245,10 @@
       <div class="ai-field"><label>部署</label><input type="text" id="f-dept" maxlength="30"></div>
       <div class="ai-field"><label>付与ツール</label><select id="f-tool"></select></div>
       <div class="ai-field"><label>状態</label><select id="f-status"></select></div>
-      <div class="ai-field"><label>付与日</label><input type="text" id="f-granted" placeholder="2026-10-01" maxlength="10"></div>
+      <div class="ai-field"><label>任命日（付与日）</label><input type="text" id="f-granted" placeholder="2026-10-01" maxlength="10"></div>
       <div class="ai-field"><label>削減目標（月・時間）</label><input type="number" id="f-goal" min="0" max="500"></div>
+      <div class="ai-field" style="grid-column:1/-1"><label>勉強会での発表<span class="hint">1行に1回「日付 タイトル」</span></label><textarea id="f-pres" maxlength="3000" style="min-height:70px" placeholder="2026-09-04 NotebookLMで録音を要約する方法"></textarea></div>
+      <div class="ai-field" style="grid-column:1/-1"><label>月間アクティブ日数<span class="hint">各ツールの管理画面の数字。1行に「年-月 日数」</span></label><textarea id="f-active" maxlength="1000" style="min-height:60px" placeholder="2026-10 12"></textarea></div>
       <div class="ai-field" style="grid-column:1/-1"><label>メモ<span class="hint">対象業務・面談記録など</span></label><textarea id="f-note" maxlength="1000" style="min-height:70px"></textarea></div>
     </div>
     <div id="f-access" class="ai-note" style="font-size:12px"></div>
@@ -291,6 +319,13 @@ const PAGES = [
 let me = null, access = { admins:[], members:[], proposalViewers:[] };
 let employees = {}, licenses = [], seatConfig = { chatgpt:6, claude:5 };
 let cases = [], threads = [], diags = {}, syncStatus = null;
+let attendance = [], surveys = [], diagResp = [], insights = [];
+let judgeConfig = { gateDays: 8, gateMonths: 4, keepScore: 40, promoteTop: 2 }, judgePeriod = '6m', candFilter = 'all';
+const ym = d => d ? d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') : '';
+const isQuestion = t => !t.kind || t.kind === 'question';
+// 「2026-09-04 タイトル」形式の発表記録を配列にする
+const parsePres = txt => String(txt || '').split(/\n/).map(l => l.trim()).filter(Boolean).map(l => { const m = l.match(/^(\d{4}-\d{2}-\d{2})\s*(.*)$/); return m ? { date: m[1], title: m[2] } : { date: '', title: l }; });
+const parseActive = txt => { const o = {}; String(txt || '').split(/\n/).forEach(l => { const m = l.trim().match(/^(\d{4}-\d{2})\s+(\d+)/); if(m) o[m[1]] = Number(m[2]); }); return o; };
 let licFilter = 'all', monthFilter = '30d';
 
 /* ---------------- 権限マップ ---------------- */
@@ -412,15 +447,15 @@ $('role-lists').addEventListener('click', async e => {
 $('role-lists').addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.dataset.addin){ document.querySelector(`[data-addbtn="${e.target.dataset.addin}"]`).click(); } });
 
 /* ---------------- ツール利用者 ---------------- */
-function caseStatsFor(email){
-  const mine = cases.filter(c => c.email === email);
+function caseStatsFor(email, from){
+  const mine = cases.filter(c => c.email === email && (!from || (c.created && c.created >= from)));
   const monthly = mine.reduce((a, c) => a + (c.beforeMin > 0 && c.afterMin != null ? (c.beforeMin - c.afterMin) * (c.monthlyCount || 0) : 0), 0);
   const last = mine.map(c => c.created).filter(Boolean).sort((a, b) => b - a)[0] || null;
   return { count: mine.length, monthlyHours: Math.round(monthly / 60 * 10) / 10, last };
 }
-function slackStatsFor(email){
+function slackStatsFor(email, from){
   let answers = 0, resolved = 0, last = null;
-  threads.forEach(t => (t.responders || []).forEach(r => {
+  threads.filter(t => isQuestion(t) && (!from || (toDate(t.createdAt) || 0) >= from)).forEach(t => (t.responders || []).forEach(r => {
     if(lower(r.email) !== email) return;
     answers += r.count || 0; if(r.checked) resolved++;
     const at = toDate(t.lastActivityAt); if(at && (!last || at > last)) last = at;
@@ -457,7 +492,7 @@ function renderLicenses(){
     if(!r.staff) flags.push('社員ログイン不可');
     return { l, cs, ss, days, lastAct, flags, diag: diags[l.email] };
   }).filter(x => licFilter === 'all' ? true : licFilter === 'check' ? x.flags.length : x.l.status === licFilter);
-  const head = '<thead><tr><th>利用者</th><th>ツール</th><th>状態</th><th>付与日</th><th>事例</th><th>月間削減</th><th>Slack回答 / ✅</th><th>診断</th><th>最終活動</th><th></th></tr></thead>';
+  const head = '<thead><tr><th>アンバサダー</th><th>ツール</th><th>状態</th><th>任命日</th><th>事例</th><th>月間削減</th><th>発表</th><th>Slack回答 / ✅</th><th>診断</th><th>最終活動</th><th></th></tr></thead>';
   const body = rows.map(({ l, cs, ss, days, lastAct, flags, diag }) => {
     const st = statusOf(l.status);
     const goal = Number(l.goalHours) || 0;
@@ -468,12 +503,13 @@ function renderLicenses(){
       <td class="latin">${esc(l.grantedAt || '—')}${days != null ? `<div class="sub">${days}日目</div>` : ''}</td>
       <td class="latin">${cs.count}</td>
       <td class="latin">${cs.monthlyHours}h${goal ? `<div class="sub">目標 ${goal}h（${Math.round(cs.monthlyHours / goal * 100)}%）</div>` : ''}</td>
+      <td class="latin">${(l.presentations || []).length}</td>
       <td class="latin">${ss.answers} / ${ss.resolved}</td>
       <td>${diag ? `<span class="ai-tag blue">LV.${esc(diag.level)}</span>` : '<span class="sub">未受験</span>'}</td>
       <td class="latin">${lastAct ? esc(lastAct.toLocaleDateString('ja-JP')) : '—'}</td>
       <td><button class="ai-btn sm" type="button" data-edit="${esc(l.email)}">編集</button></td></tr>`;
   }).join('');
-  $('lic-table').innerHTML = head + `<tbody>${body || `<tr><td colspan="10"><div class="ai-empty">${licenses.length ? '該当する利用者はいません' : 'まだ記録がありません。「利用者を追加」から付与した人を記録してください。'}</div></td></tr>`}</tbody>`;
+  $('lic-table').innerHTML = head + `<tbody>${body || `<tr><td colspan="11"><div class="ai-empty">${licenses.length ? '該当する人はいません' : 'まだ記録がありません。「アンバサダーを任命」から記録するか、候補者分析から追加してください。'}</div></td></tr>`}</tbody>`;
 }
 $('lic-filters').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if(b){ licFilter = b.dataset.f; renderLicenses(); } });
 $('lic-table').addEventListener('click', e => { const b = e.target.closest('[data-edit]'); if(b) openLicense(b.dataset.edit); });
@@ -489,7 +525,7 @@ function accessPreview(){
   $('f-access').innerHTML = `<b>この人が見られるページ：</b>${esc(ok.join('、'))}` +
     (r.staff ? '' : '<br><span style="color:var(--gold)">⚠ 社外ドメインです。事例投稿・ダッシュボードを使うには「権限の設定」で出欠メンバーに登録してください。</span>');
 }
-function openLicense(email){
+function openLicense(email, preset){
   editing = email ? licenses.find(l => l.email === email) : null;
   $('lic-title').textContent = editing ? '利用者の記録を編集' : '利用者を追加（付与を記録）';
   $('f-email').value = editing?.email || ''; $('f-email').readOnly = !!editing;
@@ -497,7 +533,10 @@ function openLicense(email){
   $('f-tool').value = editing?.tool || 'chatgpt'; $('f-status').value = editing?.status || 'active';
   $('f-granted').value = editing?.grantedAt || new Date().toISOString().slice(0, 10);
   $('f-goal').value = editing?.goalHours ?? ''; $('f-note').value = editing?.note || '';
+  $('f-pres').value = (editing?.presentations || []).map(x => (x.date + ' ' + x.title).trim()).join('\n');
+  $('f-active').value = Object.entries(editing?.activeDays || {}).sort().map(([k, v]) => k + ' ' + v).join('\n');
   $('f-delete').classList.toggle('ai-hidden', !editing);
+  if(preset){ $('f-email').value = preset.email; $('f-name').value = preset.name || ''; $('f-dept').value = preset.dept || ''; $('f-status').value = preset.status || 'waiting'; }
   accessPreview(); $('lic-dialog').showModal();
 }
 $('f-email').addEventListener('input', () => {
@@ -506,6 +545,11 @@ $('f-email').addEventListener('input', () => {
   accessPreview();
 });
 $('lic-add').onclick = () => openLicense(null);
+async function saveLicense(rec){
+  await setDoc(doc(db, 'aiStudy_licenses', rec.email), { ...rec, updatedAt: serverTimestamp(), updatedBy: lower(me.email) });
+  const i = licenses.findIndex(l => l.email === rec.email);
+  if(i >= 0) licenses[i] = rec; else licenses.push(rec);
+}
 $('f-save').onclick = async () => {
   const email = lower($('f-email').value);
   if(!isEmail(email)){ toast('メールアドレスを正しく入力してください'); return; }
@@ -517,6 +561,8 @@ $('f-save').onclick = async () => {
     email, name: $('f-name').value.trim(), dept: $('f-dept').value.trim(),
     tool: $('f-tool').value, status: $('f-status').value, grantedAt: granted,
     goalHours: $('f-goal').value === '' ? null : Number($('f-goal').value), note: $('f-note').value.trim(),
+    presentations: parsePres($('f-pres').value), activeDays: parseActive($('f-active').value),
+    decisions: prev.decisions || [],
     updatedAt: serverTimestamp(), updatedBy: lower(me.email),
     history: [...(prev.history || []), ...((prev.status !== $('f-status').value || prev.tool !== $('f-tool').value)
       ? [{ at: new Date().toISOString(), by: lower(me.email), tool: $('f-tool').value, status: $('f-status').value }] : [])].slice(-30),
@@ -526,7 +572,7 @@ $('f-save').onclick = async () => {
     const i = licenses.findIndex(l => l.email === email);
     if(i >= 0) licenses[i] = rec; else licenses.push(rec);
     licenses.sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email, 'ja'));
-    $('lic-dialog').close(); renderLicenses(); toast('保存しました');
+    $('lic-dialog').close(); renderLicenses(); renderJudge(); renderCandidates(); toast('保存しました');
   } catch(err){ toast('保存に失敗しました：' + (err.code || err.message)); }
 };
 $('f-delete').onclick = async () => {
@@ -538,7 +584,7 @@ $('seat-edit').onclick = async () => {
   const a = prompt('Aコース（ChatGPT Business）の枠数', seatConfig.chatgpt); if(a === null) return;
   const b = prompt('Bコース（Claude Team Standard）の枠数', seatConfig.claude); if(b === null) return;
   const cfg = { chatgpt: Math.max(0, parseInt(a, 10) || 0), claude: Math.max(0, parseInt(b, 10) || 0) };
-  try { await setDoc(doc(db, 'aiStudy_licenses', '__config'), { seats: cfg }); seatConfig = cfg; renderSeats(); toast('枠数を保存しました'); }
+  try { await setDoc(doc(db, 'aiStudy_licenses', '__config'), { seats: cfg, judge: judgeConfig }); seatConfig = cfg; renderSeats(); toast('枠数を保存しました'); }
   catch(err){ toast('保存に失敗しました：' + (err.code || err.message)); }
 };
 $('lic-csv').onclick = () => {
@@ -558,9 +604,14 @@ function renderSlack(){
   const s = syncStatus;
   const last = s && toDate(s.lastSyncAt);
   const stale = last && Date.now() - last > 3 * 3600e3;
-  $('sync').className = 'sync ' + (!s ? '' : s.ok && !stale ? 'ok' : 'err');
+  $('sync').className = 'sync ' + (!s ? '' : s.ok && !(s.source === 'claude-weekly' ? last && Date.now() - last > 8 * 864e5 : stale) ? 'ok' : 'err');
+  $('sync-detail').innerHTML = s ? `最終解析：${last ? esc(last.toLocaleString('ja-JP')) : '—'}（${esc(s.source === 'claude-weekly' ? 'Claude週次解析' : s.source || '')}）・Slack投稿 ${esc(s.threads ?? 0)}件／うち質問 ${esc(s.questions ?? '—')}件` : 'まだ解析されていません。';
+  const src = s?.source === 'claude-weekly' ? 'Claudeの週次解析' : '自動確認';
+  const stale2 = last && Date.now() - last > 8 * 864e5;
   $('sync').innerHTML = !s
-    ? '<span class="dot"></span><b>まだ連携されていません</b><span style="color:var(--muted)">「連携の設定」タブの手順で、Slackの自動確認を設定してください。</span>'
+    ? '<span class="dot"></span><b>まだ解析されていません</b><span style="color:var(--muted)">毎週月曜にClaudeが #ask-ai勉強会 を解析します。</span>'
+    : s.source === 'claude-weekly'
+    ? `<span class="dot"></span><b>${s.ok && !stale2 ? 'Claudeの週次解析で更新されています' : '最後の解析から1週間以上たっています'}</b><span style="color:var(--muted)">最終解析：${last ? esc(last.toLocaleString('ja-JP')) : '—'}・次回：${esc(s.nextRun || '毎週月曜')}</span>`
     : `<span class="dot"></span><b>${s.ok ? (stale ? '最終確認から3時間以上たっています' : '自動確認は正常に動いています') : '前回の自動確認でエラーがありました'}</b>
        <span style="color:var(--muted)">最終確認：${last ? esc(last.toLocaleString('ja-JP')) : '—'}・対象 ${esc(s.threads ?? 0)} 件</span>${s.ok ? '' : `<span class="ai-tag coral">${esc(s.error || '')}</span>`}`;
 
@@ -573,14 +624,14 @@ function renderSlack(){
     if(monthFilter === '30d') return Date.now() - d < 30 * 864e5;
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') === monthFilter;
   };
-  const list = threads.filter(inRange);
+  const all = threads.filter(inRange), list = all.filter(isQuestion), infos = all.length - list.length;
   const unanswered = list.filter(t => t.status === 'unanswered');
   const resolved = list.filter(t => t.status === 'resolved');
   const firsts = list.map(t => t.firstReplyMinutes).filter(v => typeof v === 'number');
   const avgFirst = firsts.length ? Math.round(firsts.reduce((a, b) => a + b, 0) / firsts.length) : null;
   const fmtMin = m => m == null ? '—' : m < 60 ? `${m}<small>分</small>` : `${Math.round(m / 6) / 10}<small>時間</small>`;
   $('slack-stats').innerHTML = `
-    <div class="ai-stat"><div class="k">質問</div><div class="v">${list.length}<small>件</small></div></div>
+    <div class="ai-stat"><div class="k">質問（社員から）</div><div class="v">${list.length}<small>件</small></div></div>
     <div class="ai-stat"><div class="k">未回答</div><div class="v" style="color:${unanswered.length ? 'var(--gold)' : 'inherit'}">${unanswered.length}<small>件</small></div></div>
     <div class="ai-stat accent"><div class="k">解決率（✅）</div><div class="v">${list.length ? Math.round(resolved.length / list.length * 100) : 0}<small>%</small></div></div>
     <div class="ai-stat"><div class="k">最初の回答まで（平均）</div><div class="v">${fmtMin(avgFirst)}</div></div>`;
@@ -599,15 +650,187 @@ function renderSlack(){
 
   const tItem = t => {
     const d = toDate(t.createdAt);
-    const st = t.status === 'resolved' ? '<span class="ai-tag teal">✅ 解決</span>' : t.status === 'answered' ? '<span class="ai-tag blue">回答あり</span>' : '<span class="ai-tag gold">未回答</span>';
+    const kindTag = t.kind === 'announcement' ? '<span class="ai-tag mute">運営の案内</span>' : t.kind === 'share' ? '<span class="ai-tag blue">資料・ノウハウの共有</span>' : '';
+    const st = kindTag ? kindTag : t.status === 'resolved' ? '<span class="ai-tag teal">✅ 解決</span>' : t.status === 'answered' ? '<span class="ai-tag blue">回答あり</span>' : '<span class="ai-tag gold">未回答</span>';
     const who = (t.responders || []).map(r => employees[lower(r.email)]?.name || r.name).filter(Boolean).join('、');
     return `<div class="thread"><div class="top">${st}<span>${esc(employees[lower(t.askerEmail)]?.name || t.askerName || '')}</span><span>${d ? esc(d.toLocaleString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })) : ''}</span>
-      ${who ? `<span>回答：${esc(who)}</span>` : ''}</div><div class="tx">${esc(t.text || '')}</div>${/^https:\/\/[\w.-]+\.slack\.com\//.test(t.url || '') ? `<a href="${esc(t.url)}" target="_blank" rel="noopener">Slackで開く ↗</a>` : ''}</div>`;
+      ${who ? `<span>回答：${esc(who)}</span>` : ''}</div><div class="tx">${esc(t.text || '')}</div>${/^https:\/\/([\w-]+\.)?slack\.com\//.test(t.url || '') ? `<a href="${esc(t.url)}" target="_blank" rel="noopener">Slackで開く ↗</a>` : ''}</div>`;
   };
   $('slack-open').innerHTML = unanswered.length ? unanswered.slice(0, 10).map(tItem).join('') : '<div class="ai-empty">未回答の質問はありません</div>';
-  $('slack-recent').innerHTML = list.length ? list.slice(0, 20).map(tItem).join('') : '<div class="ai-empty">この期間の質問はまだありません</div>';
+  $('slack-recent').innerHTML = all.length ? all.slice(0, 20).map(tItem).join('') : '<div class="ai-empty">この期間の投稿はまだありません</div>';
+  if(!list.length && infos) $('slack-open').innerHTML = `<div class="ai-empty">社員からの質問はまだありません（運営の案内・共有 ${infos}件）</div>`;
 }
 $('month-filters').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if(b){ monthFilter = b.dataset.m; renderSlack(); } });
+
+/* ---------------- 判定（卒業・足切り） ---------------- */
+const PERIODS = [['6m','直近6か月'],['3m','直近3か月'],['h1','今年 1〜6月'],['h2','今年 7〜12月']];
+function periodRange(k){
+  const now = new Date(), y = now.getFullYear();
+  if(k === 'h1') return { from: new Date(y, 0, 1), to: new Date(y, 6, 1) };
+  if(k === 'h2') return { from: new Date(y, 6, 1), to: new Date(y + 1, 0, 1) };
+  const n = k === '3m' ? 3 : 6;
+  return { from: new Date(y, now.getMonth() - n + 1, 1), to: new Date(y, now.getMonth() + 1, 1) };
+}
+function monthsIn(r){ const out = []; for(let d = new Date(r.from); d < r.to; d.setMonth(d.getMonth() + 1)) out.push(ym(d)); return out; }
+const RESULTS = { promote:{ label:'B昇格', cls:'teal' }, keep:{ label:'継続', cls:'' }, yellow:{ label:'黄色信号', cls:'gold' }, graduate:{ label:'卒業', cls:'coral' } };
+function judgeRows(){
+  const r = periodRange(judgePeriod), months = monthsIn(r).filter(m => m <= ym(new Date()));
+  const rows = licenses.filter(l => ['active','yellow'].includes(l.status)).map(l => {
+    const cs = caseStatsFor(l.email, r.from), ss = slackStatsFor(l.email, r.from);
+    const pres = (l.presentations || []).filter(p => p.date && new Date(p.date) >= r.from && new Date(p.date) < r.to).length;
+    const act = months.map(m => (l.activeDays || {})[m]).filter(v => typeof v === 'number');
+    const metMonths = act.filter(v => v >= judgeConfig.gateDays).length;
+    const needMonths = Math.min(judgeConfig.gateMonths, months.length);
+    const gate = !act.length ? 'unknown' : metMonths >= needMonths ? 'pass' : 'fail';
+    const score = Math.round((ss.resolved * 3 + cs.count * 5 + cs.monthlyHours + pres * 5) * 10) / 10;
+    const lastDecision = (l.decisions || []).slice(-1)[0];
+    return { l, cs, ss, pres, act, metMonths, needMonths, gate, score, lastDecision };
+  });
+  const bFree = Math.max(0, (Number(seatConfig.claude) || 0) - licenses.filter(l => l.tool === 'claude' && ['active','yellow'].includes(l.status)).length);
+  const aRank = rows.filter(x => x.l.tool === 'chatgpt' && x.gate !== 'fail' && x.score >= judgeConfig.keepScore).sort((a, b) => b.score - a.score);
+  const promoteSet = new Set(aRank.slice(0, Math.min(judgeConfig.promoteTop, bFree)).map(x => x.l.email));
+  rows.forEach(x => {
+    const fail = x.gate === 'fail' || x.score < judgeConfig.keepScore;
+    const wasYellow = x.l.status === 'yellow' || x.lastDecision?.result === 'yellow';
+    const since = x.l.grantedAt ? Math.floor((Date.now() - new Date(x.l.grantedAt)) / 864e5) : null;
+    x.young = since != null && since < 90;
+    // 任命から90日未満は判定しない（運用設計の「90日早期チェック」はサポートであって判定ではない）
+    x.suggest = x.young ? 'keep' : fail ? (wasYellow ? 'graduate' : 'yellow') : promoteSet.has(x.l.email) ? 'promote' : 'keep';
+    x.why = [x.gate === 'fail' ? `利用日数の基準未達（${x.metMonths}/${x.needMonths}か月）` : x.gate === 'unknown' ? '利用日数が未入力' : `利用日数OK（${x.metMonths}/${x.needMonths}か月）`,
+      `スコア ${x.score}点（基準 ${judgeConfig.keepScore}点）`, x.young ? '任命から90日未満のため判定しない' : '', wasYellow && fail ? '前回も黄色信号' : '', x.suggest === 'promote' ? 'Aコース上位＋B枠に空きあり' : ''].filter(Boolean);
+  });
+  return { rows: rows.sort((a, b) => b.score - a.score), months, bFree };
+}
+function renderJudge(){
+  $('judge-periods').innerHTML = PERIODS.map(([k, l]) => `<button class="fchip${judgePeriod === k ? ' on' : ''}" data-p="${k}" type="button">${esc(l)}</button>`).join('');
+  $('judge-rule').innerHTML = `足切り：月間アクティブ日数 ${judgeConfig.gateDays}日以上の月が ${judgeConfig.gateMonths}か月以上　／　スコア ＝ Slack解決×3 ＋ 事例×5 ＋ 月間削減時間 ＋ 発表×5（継続の基準 ${judgeConfig.keepScore}点）　／　B昇格：Aコース上位 ${judgeConfig.promoteTop}名（B枠の空きまで）`;
+  const { rows, bFree } = judgeRows();
+  const cnt = k => rows.filter(x => x.suggest === k).length;
+  $('judge-stats').innerHTML = `
+    <div class="ai-stat"><div class="k">判定対象</div><div class="v">${rows.length}<small>名</small></div></div>
+    <div class="ai-stat accent"><div class="k">B昇格の目安</div><div class="v">${cnt('promote')}<small>名（B枠の空き ${bFree}）</small></div></div>
+    <div class="ai-stat"><div class="k">継続</div><div class="v">${cnt('keep')}<small>名</small></div></div>
+    <div class="ai-stat"><div class="k">黄色信号 / 卒業の目安</div><div class="v" style="color:${cnt('yellow') + cnt('graduate') ? 'var(--gold)' : 'inherit'}">${cnt('yellow')}<small> / </small>${cnt('graduate')}<small>名</small></div></div>`;
+  const head = '<thead><tr><th>アンバサダー</th><th>利用日数（足切り）</th><th>事例</th><th>削減/月</th><th>発表</th><th>Slack✅</th><th>スコア</th><th>判定の目安</th><th>記録</th></tr></thead>';
+  const body = rows.map(x => {
+    const sg = RESULTS[x.suggest];
+    const gateTxt = x.gate === 'unknown' ? '<span class="warn">未入力</span>' : `<span class="${x.gate === 'pass' ? 'yes' : 'warn'}">${x.gate === 'pass' ? '達成' : '未達'}</span><div class="sub">${x.metMonths}/${x.needMonths}か月・平均 ${x.act.length ? Math.round(x.act.reduce((a, b) => a + b, 0) / x.act.length) : 0}日</div>`;
+    return `<tr><td><div class="nm">${esc(x.l.name || x.l.email)}</div><div class="sub">${esc(toolOf(x.l.tool).course)}・任命 ${esc(x.l.grantedAt || '—')}${x.lastDecision ? `・前回 ${esc(RESULTS[x.lastDecision.result]?.label || '')}` : ''}</div></td>
+      <td>${gateTxt}</td><td class="latin">${x.cs.count}</td><td class="latin">${x.cs.monthlyHours}h</td><td class="latin">${x.pres}</td><td class="latin">${x.ss.resolved}</td>
+      <td class="latin"><b>${x.score}</b></td>
+      <td><span class="ai-tag ${sg.cls}">${esc(sg.label)}</span><div class="sub">${x.why.map(esc).join('<br>')}</div></td>
+      <td><select class="ai-input" style="padding:6px 30px 6px 10px;font-size:12px;min-width:110px" data-jres="${esc(x.l.email)}">${Object.entries(RESULTS).map(([k, v]) => `<option value="${k}"${k === x.suggest ? ' selected' : ''}>${esc(v.label)}</option>`).join('')}</select>
+        <input class="ai-input" style="padding:6px 10px;font-size:12px;margin-top:4px" data-jnote="${esc(x.l.email)}" placeholder="面談メモ" maxlength="300">
+        <button class="ai-btn sm primary" style="margin-top:4px" type="button" data-jsave="${esc(x.l.email)}">判定を記録</button></td></tr>`;
+  }).join('');
+  $('judge-table').innerHTML = head + `<tbody>${body || '<tr><td colspan="9"><div class="ai-empty">判定対象（利用中・黄色信号）のアンバサダーがいません</div></td></tr>'}</tbody>`;
+}
+$('judge-periods').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if(b){ judgePeriod = b.dataset.p; renderJudge(); } });
+$('judge-table').addEventListener('click', async e => {
+  const b = e.target.closest('[data-jsave]'); if(!b) return;
+  const email = b.dataset.jsave, l = licenses.find(x => x.email === email); if(!l) return;
+  const result = document.querySelector(`[data-jres="${CSS.escape(email)}"]`).value;
+  const note = document.querySelector(`[data-jnote="${CSS.escape(email)}"]`).value.trim();
+  const label = RESULTS[result].label;
+  if(!confirm(`${l.name || email} を「${label}」として記録しますか？${result === 'promote' ? '\n（付与ツールを Claude Team に変更します。Aコースの枠が空きます）' : result === 'graduate' ? '\n（状態を卒業にします。各ツールの管理画面でアカウントの回収も行ってください）' : ''}`)) return;
+  const rec = { ...l, decisions: [...(l.decisions || []), { at: new Date().toISOString(), by: lower(me.email), period: PERIODS.find(p => p[0] === judgePeriod)[1], result, note }].slice(-20) };
+  if(result === 'promote'){ rec.tool = 'claude'; rec.status = 'active'; }
+  if(result === 'keep') rec.status = 'active';
+  if(result === 'yellow') rec.status = 'yellow';
+  if(result === 'graduate') rec.status = 'graduated';
+  rec.history = [...(l.history || []), { at: new Date().toISOString(), by: lower(me.email), tool: rec.tool, status: rec.status }].slice(-30);
+  try { await saveLicense(rec); renderLicenses(); renderJudge(); renderCandidates(); toast(`「${label}」を記録しました`); }
+  catch(err){ toast('保存に失敗しました：' + (err.code || err.message)); }
+});
+$('judge-config').onclick = async () => {
+  const a = prompt('足切り：月間アクティブ日数（日以上）', judgeConfig.gateDays); if(a === null) return;
+  const b = prompt('足切り：その日数を満たす月の数（か月以上）', judgeConfig.gateMonths); if(b === null) return;
+  const c = prompt('継続の基準スコア（点以上）', judgeConfig.keepScore); if(c === null) return;
+  const d = prompt('B昇格の目安：Aコース上位何名', judgeConfig.promoteTop); if(d === null) return;
+  const cfg = { gateDays: +a || 0, gateMonths: +b || 0, keepScore: +c || 0, promoteTop: +d || 0 };
+  try { await setDoc(doc(db, 'aiStudy_licenses', '__config'), { seats: seatConfig, judge: cfg }); judgeConfig = cfg; renderJudge(); toast('判定基準を保存しました'); }
+  catch(err){ toast('保存に失敗しました：' + (err.code || err.message)); }
+};
+
+/* ---------------- 候補者分析 ---------------- */
+// 点数の内訳（合計100点）。運用設計の STANDARD と同じ考え方で「教え広める人」を探す
+const CAND_PARTS = [
+  { key:'join', label:'参加', max:20 }, { key:'cases', label:'事例', max:25 }, { key:'diag', label:'診断', max:15 },
+  { key:'mind', label:'姿勢', max:25 }, { key:'help', label:'助け合い', max:15 },
+];
+function candidateRows(){
+  const P = {};
+  const get = e => { e = lower(e); if(!e) return null; return P[e] = P[e] || { email: e, sessions: new Set(), absent: 0, cases: 0, saved: 0, diag: [], use: [], takeaway: 0, answers: 0, resolved: 0, asked: 0 }; };
+  attendance.forEach(a => { const p = get(a.email); if(!p) return; if(a.status === 'present') p.sessions.add(a.date); else p.absent++; });
+  surveys.forEach(v => { const p = get(v.email); if(!p) return; if(v.eventDate) p.sessions.add(v.eventDate); if(+v.usefulness) p.use.push(+v.usefulness); if(String(v.takeaway || '').trim().length >= 10) p.takeaway++; });
+  cases.forEach(c => { const p = get(c.email); if(!p) return; p.cases++; if(c.beforeMin > 0 && c.afterMin != null) p.saved += Math.max(0, c.beforeMin - c.afterMin) * Math.max(1, c.monthlyCount || 1); });
+  diagResp.forEach(d => { const p = get(d.email); if(p) p.diag.push(d); });
+  threads.filter(isQuestion).forEach(t => { const a = get(t.askerEmail); if(a) a.asked++; (t.responders || []).forEach(r => { const p = get(r.email); if(!p) return; p.answers += r.count || 0; if(r.checked) p.resolved++; }); });
+  const latestInsight = insights[0];
+  const notes = Object.fromEntries((latestInsight?.candidates || []).map(c => [lower(c.email), c]));
+  const totalSessions = new Set([...attendance.map(a => a.date), ...surveys.map(v => v.eventDate)].filter(Boolean)).size || 1;
+  return Object.values(P).map(p => {
+    const d = [...p.diag].sort((a, b) => (toDate(a.submittedAt) || 0) - (toDate(b.submittedAt) || 0));
+    const last = d[d.length - 1], first = d[0];
+    const growth = last && first && d.length > 1 ? last.score - first.score : 0;
+    const share = Number(last?.answers?.share), exp = Number(last?.answers?.experiment);
+    const interest = { using: 5, strong: 5, interested: 3, trial: 2 }[last?.paidToolsInterest] || 0;
+    const avgUse = p.use.length ? p.use.reduce((a, b) => a + b, 0) / p.use.length : 0;
+    const sessions = p.sessions.size, rate = sessions / Math.max(sessions + p.absent, 1);
+    const parts = {
+      join: Math.min(1, sessions / Math.min(3, totalSessions)) * 12 + rate * 8,
+      cases: Math.min(1, p.cases / 3) * 15 + Math.min(1, p.saved / 60 / 10) * 10,
+      diag: last ? (last.level / 5) * 10 + Math.min(1, Math.max(0, growth) / 10) * 5 : 0,
+      mind: (isNaN(share) ? 0 : share / 4 * 8) + (isNaN(exp) ? 0 : exp / 4 * 5) + interest + Math.min(1, p.takeaway / 2) * 4 + (avgUse ? (avgUse - 1) / 4 * 3 : 0),
+      help: Math.min(1, (p.answers + p.resolved * 2) / 5) * 15,
+    };
+    Object.keys(parts).forEach(k => parts[k] = Math.round(Math.min(CAND_PARTS.find(x => x.key === k).max, parts[k]) * 10) / 10);
+    const total = Math.round(Object.values(parts).reduce((a, b) => a + b, 0));
+    const lic = licenses.find(l => l.email === p.email);
+    const emp = employees[p.email];
+    return { ...p, sessions, parts, total, last, lic, name: emp?.name || '', dept: emp?.dept || '', note: notes[p.email] };
+  }).filter(x => !access.admins.includes(x.email)).sort((a, b) => (b.note ? 1 : 0) - (a.note ? 1 : 0) || b.total - a.total);
+}
+function renderInsight(){
+  const i = insights[0];
+  if(!i){ $('insight-card').innerHTML = '<h3>Claudeの週次所見</h3><div class="ai-empty">まだ解析されていません。毎週月曜にClaudeが解析します。</div>'; return; }
+  const at = toDate(i.createdAt);
+  const list = (arr, cls) => (arr || []).length ? `<ul style="margin:6px 0 0;padding-left:18px;font-size:13px;${cls || ''}">${arr.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+  $('insight-card').innerHTML = `
+    <h3 style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">Claudeの週次所見 <span class="ai-tag blue">${at ? esc(at.toLocaleDateString('ja-JP')) : ''}</span><span style="color:var(--muted);font-size:12px;font-weight:400">${esc(i.period || '')}</span></h3>
+    <p style="margin:0;font-size:14px">${esc(i.summary || '')}</p>
+    <div class="ai-grid3" style="margin-top:14px">
+      <div><span class="ai-tag teal">よく出るテーマ</span>${list(i.themes, 'color:var(--muted)')}</div>
+      <div><span class="ai-tag gold">気になる点</span>${list(i.concerns, 'color:var(--muted)')}</div>
+      <div><span class="ai-tag">運営への提案</span>${list(i.actions, 'color:var(--muted)')}</div>
+    </div>
+    ${insights.length > 1 ? `<div style="margin-top:12px;font-size:12px;color:var(--faint)">過去の所見：${insights.slice(1, 6).map(x => esc(toDate(x.createdAt)?.toLocaleDateString('ja-JP') || x.id)).join('・')}</div>` : ''}`;
+}
+function renderCandidates(){
+  renderInsight();
+  const rows = candidateRows();
+  const filtered = rows.filter(x => candFilter === 'all' ? !x.lic || x.lic.status === 'graduated' : candFilter === 'note' ? x.note : candFilter === 'amb' ? x.lic && x.lic.status !== 'graduated' : true);
+  const n = k => rows.filter(x => k === 'note' ? x.note : k === 'amb' ? x.lic && x.lic.status !== 'graduated' : !x.lic || x.lic.status === 'graduated').length;
+  $('cand-filters').innerHTML = [['all','候補（未任命）'], ['note','Claudeが推薦'], ['amb','任命済み']]
+    .map(([k, l]) => `<button class="fchip${candFilter === k ? ' on' : ''}" data-cf="${k}" type="button">${esc(l)} ${n(k)}</button>`).join('');
+  const fitCls = { '推薦':'teal', '有力':'', '見守り':'mute' };
+  const head = `<thead><tr><th>社員</th><th>スコア</th>${CAND_PARTS.map(p => `<th>${esc(p.label)}<span style="color:var(--faint)">/${p.max}</span></th>`).join('')}<th>Claudeの所見</th><th></th></tr></thead>`;
+  const body = filtered.slice(0, 60).map(x => `<tr>
+    <td><div class="nm">${esc(x.name || x.note?.name || x.email)}</div><div class="sub">${esc(x.dept || '')}${x.dept ? '・' : ''}参加 ${x.sessions}回・事例 ${x.cases}件${x.last ? `・LV.${esc(x.last.level)}` : ''}</div>${x.lic ? `<span class="ai-tag ${statusOf(x.lic.status).cls}" style="margin-top:4px">${esc(statusOf(x.lic.status).label)}</span>` : ''}</td>
+    <td><div class="latin" style="font-size:20px;font-weight:700">${x.total}</div><div class="bar" style="width:70px"><i style="width:${x.total}%"></i></div></td>
+    ${CAND_PARTS.map(p => `<td class="latin" style="color:${x.parts[p.key] ? 'var(--text)' : 'var(--faint)'}">${x.parts[p.key]}</td>`).join('')}
+    <td style="min-width:260px">${x.note ? `<span class="ai-tag ${fitCls[x.note.fit] ?? ''}">${esc(x.note.fit)}</span> <span class="ai-tag mute">${esc(x.note.role || '')}</span><div style="font-size:12px;color:var(--muted);margin-top:4px">${esc(x.note.reason)}</div>` : '<span class="sub">—</span>'}</td>
+    <td>${x.lic && x.lic.status !== 'graduated' ? '' : `<button class="ai-btn sm" type="button" data-cand="${esc(x.email)}">名簿に追加</button>`}</td></tr>`).join('');
+  $('cand-table').innerHTML = head + `<tbody>${body || '<tr><td colspan="9"><div class="ai-empty">該当する人はいません</div></td></tr>'}</tbody>`;
+  $('cand-note').textContent = '参加＝出欠記録とアンケート回答／事例＝投稿数と削減時間／診断＝AI活用レベルと伸び／姿勢＝診断の「共有」「挑戦」、有料ツールへの意欲、アンケートの学びの記述／助け合い＝Slackでの回答と✅。管理者は一覧から除いています。';
+}
+$('cand-filters').addEventListener('click', e => { const b = e.target.closest('[data-cf]'); if(b){ candFilter = b.dataset.cf; renderCandidates(); } });
+$('cand-table').addEventListener('click', e => {
+  const b = e.target.closest('[data-cand]'); if(!b) return;
+  const x = candidateRows().find(r => r.email === b.dataset.cand);
+  const existing = licenses.find(l => l.email === b.dataset.cand);
+  if(existing) openLicense(existing.email); else openLicense(null, { email: x.email, name: x.name || x.note?.name, dept: x.dept, status: 'waiting' });
+});
 
 /* ---------------- 読み込み ---------------- */
 document.querySelector('.ai-tabs').addEventListener('click', e => {
@@ -642,7 +865,16 @@ if(LOCAL){
   syncStatus = { ok:true, lastSyncAt:new Date(), threads:3 };
   $('gate').classList.add('ai-hidden'); $('app').classList.remove('ai-hidden');
   $('emp-list').innerHTML = Object.entries(employees).map(([e, v]) => `<option value="${esc(e)}">${esc(v.name)}</option>`).join('');
-  renderMatrix(); renderLists(); renderLicenses(); renderSlack();
+  licenses[0].presentations = [{ date: d(30).toISOString().slice(0,10), title:'録音を要約する方法' }];
+  licenses[0].activeDays = { [ym(d(60))]: 12, [ym(d(30))]: 9, [ym(d(0))]: 4 };
+  attendance = [{ email:'guest@gmail.com', date:'2026-08-28', status:'present' }, { email:'a3@ych-exceed.com', date:'2026-08-28', status:'present' }, { email:'a3@ych-exceed.com', date:'2026-09-04', status:'present' }];
+  surveys = [{ email:'a3@ych-exceed.com', eventDate:'2026-09-04', usefulness:5, takeaway:'Gemを作って日報に使ってみます' }];
+  employees['a3@ych-exceed.com'] = { name:'候補 五郎', dept:'IC課' };
+  diagResp = [{ email:'a3@ych-exceed.com', level:3, score:30, answers:{ share:3, experiment:3 }, paidToolsInterest:'strong', submittedAt:d(40) }, { email:'a3@ych-exceed.com', level:4, score:40, answers:{ share:4, experiment:3 }, paidToolsInterest:'strong', submittedAt:d(5) }];
+  insights = [{ id:'demo', createdAt:new Date(), period:'デモ', summary:'（架空データ）質問はまだ少なめです。', themes:['Gemの作り方'], concerns:['診断の受験者が少ない'], actions:['勉強会後に質問スレッドを立てる'], candidates:[{ email:'a3@ych-exceed.com', name:'候補 五郎', fit:'推薦', role:'Aコース候補', reason:'3回参加し、学びを具体的に書いている。' }] }];
+  threads.unshift({ kind:'share', text:'勉強会の資料を共有します', askerName:'運営 太郎', createdAt:d(3), status:'info', responders:[] });
+  syncStatus.source = 'claude-weekly';
+  renderMatrix(); renderLists(); renderLicenses(); renderSlack(); renderJudge(); renderCandidates();
 } else onAuthStateChanged(auth, async u => {
   me = u;
   $('user-line').innerHTML = u ? `<span>${esc(u.email)}</span><button class="ai-btn sm" type="button" id="logout">ログアウト</button>` : '';
@@ -658,23 +890,31 @@ if(LOCAL){
   $('gate').classList.add('ai-hidden'); $('app').classList.remove('ai-hidden');
   renderMatrix(); renderLists();
 
-  const [emp, lic, cs, th, sync, dg] = await Promise.all([
+  const [emp, lic, cs, th, sync, dg, att, sv, dr, ins] = await Promise.all([
     safe(() => getDocs(collection(db, 'aiStudy_employees')), null),
     safe(() => getDocs(collection(db, 'aiStudy_licenses')), null),
     safe(() => getDocs(collection(db, 'aiStudy_cases')), null),
     safe(() => getDocs(query(collection(db, 'aiStudy_slackThreads'), orderBy('createdAt', 'desc'), limit(500))), null),
     safe(() => getDoc(doc(db, 'aiStudy_slackSync', 'status')), null),
     safe(() => getDocs(collection(db, 'aiStudy_aiDiagnostics')), null),
+    safe(() => getDocs(collection(db, 'aiStudy_attendance')), null),
+    safe(() => getDocs(collection(db, 'aiStudy_surveys')), null),
+    safe(() => getDocs(collection(db, 'aiStudy_aiDiagnosticResponses')), null),
+    safe(() => getDocs(query(collection(db, 'aiStudy_insights'), orderBy('createdAt', 'desc'), limit(12))), null),
   ]);
   employees = {}; emp?.forEach(d => { employees[lower(d.id)] = d.data(); });
   $('emp-list').innerHTML = Object.entries(employees).map(([e, v]) => `<option value="${esc(e)}">${esc(v.name || '')}${v.dept ? '（' + esc(v.dept) + '）' : ''}</option>`).join('');
-  licenses = []; lic?.forEach(d => { if(d.id === '__config'){ seatConfig = { ...seatConfig, ...(d.data().seats || {}) }; return; } licenses.push({ email: d.id, ...d.data() }); });
+  licenses = []; lic?.forEach(d => { if(d.id === '__config'){ seatConfig = { ...seatConfig, ...(d.data().seats || {}) }; judgeConfig = { ...judgeConfig, ...(d.data().judge || {}) }; return; } licenses.push({ email: d.id, ...d.data() }); });
   licenses.sort((x, y) => (x.name || x.email).localeCompare(y.name || y.email, 'ja'));
   cases = []; cs?.forEach(d => { const x = d.data(); cases.push({ email: lower(x.email), beforeMin: Number(x.beforeMin) || 0, afterMin: x.afterMin != null ? Number(x.afterMin) : null, monthlyCount: Number(x.monthlyCount) || 0, created: toDate(x.createdAt) }); });
   threads = []; th?.forEach(d => threads.push({ id: d.id, ...d.data() }));
   syncStatus = sync?.exists() ? sync.data() : null;
   diags = {}; dg?.forEach(d => { const x = d.data(); if(x.email) diags[lower(x.email)] = x; });
-  renderLists(); renderLicenses(); renderSlack();
+  attendance = []; att?.forEach(d => attendance.push(d.data()));
+  surveys = []; sv?.forEach(d => surveys.push(d.data()));
+  diagResp = []; dr?.forEach(d => diagResp.push(d.data()));
+  insights = []; ins?.forEach(d => insights.push({ id: d.id, ...d.data() }));
+  renderLists(); renderLicenses(); renderSlack(); renderJudge(); renderCandidates();
 });
 </script>
 </body>

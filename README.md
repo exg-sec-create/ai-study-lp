@@ -51,7 +51,7 @@ ai-study-lp/
 │   ├── assets/             共通テーマ（theme.css）・共通ヘッダー（nav.js）
 │   ├── employees.html      社員マスタ管理
 │   └── firebase-config.js  Firebase接続設定
-├── gas/slack-monitor/      Slack #ask-ai勉強会 自動確認（Google Apps Script）
+├── tools/claude-weekly/    Claude 週次解析の手順書と読み書きツール
 ├── firestore.rules         Firestoreセキュリティルール
 ├── firebase.json           Firebase設定
 └── README.md               このファイル
@@ -142,8 +142,25 @@ node -v        # v18以上
 
 - **権限マップ・確認**：ページ×権限の一覧と、メールアドレス（または氏名）を入れると「その人が見られるページ／見られないページ」と理由を表示。
 - **権限の設定**：管理者・出欠メンバー・提案ページ閲覧の3つをチップで追加／削除（`aiStudy_settings/access`）。
-- **ツール利用者**：ChatGPT Business／Claude Team の付与記録（`aiStudy_licenses/{email}`）。事例数・月間削減時間・Slack回答数・診断レベルを自動集計し、「付与90日・事例ゼロ」などの要フォローを表示。
-- **Slack相談の対応状況**：`gas/slack-monitor` が1時間ごとに #ask-ai勉強会 を読み、回答者・✅解決・未回答を記録（`aiStudy_slackThreads`）。設定手順は [gas/slack-monitor/README.md](./gas/slack-monitor/README.md)。
+- **アンバサダー名簿**：任命日・付与ツール・状態・削減目標・勉強会での発表・月間アクティブ日数を記録（`aiStudy_licenses/{email}`）。事例数・月間削減時間・Slack回答数・診断レベルは自動集計。
+- **判定（卒業・足切り）**：STANDARDの基準（利用日数の足切り＋スコア）で B昇格／継続／黄色信号／卒業 の目安を表示し、面談後に判定を記録。任命から90日未満は判定しない。
+- **候補者分析**：参加・事例・診断・姿勢・助け合いの5項目で点数化し、Claudeの週次所見（考え方・意欲）と並べて表示。名簿へワンクリックで追加。
+- **Slack相談**：#ask-ai勉強会 の質問・未回答・解決率・対応した人。
+
+## 🤖 Claude 週次解析（tools/claude-weekly）
+
+GAS・スプレッドシート・Slackアプリは使いません。毎週月曜 9:00 に Claude デスクトップアプリのスケジュール機能で、Claude が [PROMPT.md](./tools/claude-weekly/PROMPT.md) の手順どおりに解析します。
+
+1. Slackコネクタで #ask-ai勉強会 を読み、投稿を「質問／共有／案内」に分類、回答者と✅を集計
+2. `profiles.cjs` で事例・出欠・アンケート・診断・名簿を読む
+3. 所見（テーマ・気になる点・提案・アンバサダー候補と理由）を作成
+4. `firestore.cjs write` で `aiStudy_slackThreads` `aiStudy_slackSync` `aiStudy_insights` に書き込み → コンソールに表示
+
+- 認証はこのMacの Firebase CLI のログイン（`firebase login`）を使用。トークンは表示・保存しません。
+- 書き込める場所はツール側で3コレクションに制限しています。
+- アプリが閉じていたときは、次に起動したときに実行されます。
+
+---
 
 ## 🎨 デザイン
 
