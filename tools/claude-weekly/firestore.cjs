@@ -59,7 +59,7 @@ async function client() {
   return new Client({ urlPrefix: 'https://firestore.googleapis.com', auth: true, apiVersion: 'v1' });
 }
 
-async function read(cols) {
+async function readCollections(cols) {
   const c = await client();
   const out = {};
   for (const col of cols) {
@@ -74,23 +74,34 @@ async function read(cols) {
       pageToken = res.body.nextPageToken || '';
     } while (pageToken);
   }
-  process.stdout.write(JSON.stringify(out, null, 1));
+  return out;
 }
 
-async function write(file) {
-  const { docs } = JSON.parse(fs.readFileSync(file, 'utf8'));
+// merge: true のときは渡した項目だけを更新し、ほかの項目は残す
+async function writeDocs(docs, { allowed = WRITABLE, merge = false } = {}) {
   if (!Array.isArray(docs) || !docs.length) throw new Error('docs が空です');
   docs.forEach(d => {
-    if (!WRITABLE.some(p => d.path.startsWith(p)) || d.path.split('/').length !== 2) throw new Error('書き込めない場所です: ' + d.path);
+    if (!allowed.some(p => d.path.startsWith(p)) || d.path.split('/').length !== 2) throw new Error('書き込めない場所です: ' + d.path);
   });
   const c = await client();
   for (let i = 0; i < docs.length; i += 400) {
-    const writes = docs.slice(i, i + 400).map(d => ({ update: { name: `${DOCS}/${d.path}`, fields: toFields(d.data) } }));
+    const writes = docs.slice(i, i + 400).map(d => ({
+      update: { name: `${DOCS}/${d.path}`, fields: toFields(d.data) },
+      ...(merge ? { updateMask: { fieldPaths: Object.keys(d.data).map(k => '`' + k + '`') } } : {}),
+    }));
     await c.post(`${DOCS}:commit`, { writes });
   }
-  console.log(`書き込み完了: ${docs.length}件`);
+  return docs.length;
 }
 
-const [cmd, ...args] = process.argv.slice(2);
-(cmd === 'read' ? read(args) : cmd === 'write' ? write(args[0]) : Promise.reject(new Error('使い方: read <collection...> | write <file.json>')))
-  .catch(e => { console.error('エラー:', e.message); process.exit(1); });
+module.exports = { readCollections, writeDocs };
+
+if (require.main === module) {
+  const [cmd, ...args] = process.argv.slice(2);
+  (cmd === 'read'
+    ? readCollections(args).then(out => process.stdout.write(JSON.stringify(out, null, 1)))
+    : cmd === 'write'
+    ? writeDocs(JSON.parse(fs.readFileSync(args[0], 'utf8')).docs).then(n => console.log(`書き込み完了: ${n}件`))
+    : Promise.reject(new Error('使い方: read <collection...> | write <file.json>')))
+    .catch(e => { console.error('エラー:', e.message); process.exit(1); });
+}

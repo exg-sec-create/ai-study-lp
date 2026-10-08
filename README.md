@@ -17,9 +17,10 @@
 | **活用ダッシュボード** | https://exg-sec-create.github.io/ai-study-lp/dashboard.html | 事例・削減時間・ランキングの可視化 |
 | **社内AI活用レベル診断** | https://exg-sec-create.github.io/ai-study-lp/ai-diagnosis.html | AI活用レベルの診断（Googleログイン） |
 | **診断結果集計** | https://exg-sec-create.github.io/ai-study-lp/ai-diagnosis-results.html | 診断結果の集計・CSV出力（管理者のみ） |
+| **社長ダッシュボード** | https://exg-sec-create.github.io/ai-study-lp/ceo.html | AI活用・勉強会・アカウント・アンバサダー・人事評価の対象を1ページで（経営閲覧・運営・管理） |
 | **運営コンソール** | https://exg-sec-create.github.io/ai-study-lp/console.html | 権限マップ・メールでのアクセス確認・権限設定・AIツール利用者台帳・Slack相談の対応状況（管理者のみ） |
 | **AIアンバサダー運用設計** | https://exg-sec-create.github.io/ai-study-lp/ambassador.html | 制度の提案・運用マップ（RULE/STANDARD/PLAYBOOK）。提案モード／修正モード（管理者＋閲覧許可者のみ） |
-| **社員マスタ管理** | https://exg-sec-create.github.io/ai-study-lp/employees.html | 事例投稿の氏名・部門判定に使う社員マスタの登録（管理者のみ） |
+| **社員マスタ・権限** | https://exg-sec-create.github.io/ai-study-lp/employees.html | スプレッドシートから同期した社員一覧で、権限（一般／アンバサダー／運営／管理）・経営閲覧・出欠対象を設定 |
 
 ---
 
@@ -146,6 +147,18 @@ node -v        # v18以上
 - **判定（卒業・足切り）**：STANDARDの基準（利用日数の足切り＋スコア）で B昇格／継続／黄色信号／卒業 の目安を表示し、面談後に判定を記録。任命から90日未満は判定しない。
 - **候補者分析**：参加・事例・診断・姿勢・助け合いの5項目で点数化し、Claudeの週次所見（考え方・意欲）と並べて表示。名簿へワンクリックで追加。
 - **Slack相談**：#ask-ai勉強会 の質問・未回答・解決率・対応した人。
+
+## 👤 社員マスタと権限
+
+- 社員の一覧はスプレッドシート「基本社員データ（システム→スプシ）」（勤怠システムの自動出力）が正。Claude が毎週（または手動の「社員マスタを今すぐ同期」で）`tools/claude-weekly/sync-employees.cjs` を使って取り込む。
+  - `aiStudy_staffRoster/{社員ID}`：シートの全員。シートにメール列がないため、事例・アンケート・Slackの「名前とメール」から照合して紐付ける（紐付かない人は社員マスタ・権限ページで管理者が入力）
+  - `aiStudy_employees/{メール}`：氏名・部署の自動判定。退職者は `active:false` になり、社員としてログインしても使えなくなる
+- 権限は `aiStudy_settings/access` の `admins`（管理）・`ops`（運営）・`proposalViewers`（経営閲覧）・`members`（出欠対象）。アンバサダーは名簿（`aiStudy_licenses`）。新しく入った人は「一般」から始まる。
+
+## 🎤 発表者の評価
+
+- 勉強会の管理で発表者（名前・メール・発表内容）を設定すると、参加後アンケートに発表者ごとの評価（5段階・良かった点・改善点）が出る。本人は自分を評価しない。
+- 結果は勉強会の管理・社長ダッシュボードに集計され、アンバサダー名簿の「発表」回数にも自動で数えられる。
 
 ## 🤖 Claude 週次解析（tools/claude-weekly）
 

@@ -196,6 +196,11 @@
       <div id="agendaEditor"></div>
       <button class="ai-btn sm" id="btnAddSlot" style="margin-top:6px">＋ 枠を追加</button>
 
+      <label style="margin-top:24px">発表者 <span class="opt">（参加後アンケートで発表者ごとの評価を集めます。社員マスタの名前から選べます）</span></label>
+      <div id="presenterEditor"></div>
+      <datalist id="empNames"></datalist>
+      <button class="ai-btn sm" id="btnAddPresenter" style="margin-top:6px">＋ 発表者を追加</button>
+
       <div class="actions"><button class="ai-btn primary" id="btnSaveEvent">イベント情報を保存</button></div>
     </div>
 
@@ -277,6 +282,8 @@
       <div class="attendance-controls"><div><label>表示する実施日</label><select id="surveyDateFilter"><option value="all">すべての実施日</option></select></div><button class="ai-btn sm" id="btnSurveyCsv">回答CSVをダウンロード</button></div>
       <div class="survey-summary" id="surveySummary"></div>
       <div id="surveyChoiceBlocks"></div>
+      <h3>発表者の評価</h3>
+      <div id="presenterResults" style="margin-bottom:24px"><p class="desc">発表者を設定すると、ここに評価が集計されます。</p></div>
       <h3>回答者ごとの回答</h3>
       <div class="respondent-list" id="surveyRespondents"><p class="desc">読み込み中…</p></div>
     </div>
@@ -292,7 +299,7 @@ import {
   getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, setDoc, deleteDoc, collection, onSnapshot, serverTimestamp, runTransaction
+  getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, onSnapshot, serverTimestamp, runTransaction
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 import { normalizeSurveyQuestions, newSurveyQuestionId } from "./survey-questions.js";
@@ -336,8 +343,10 @@ onAuthStateChanged(auth, async (user) => {
   // 管理者判定: settings/access は管理者のみ読取可能なので、読めれば管理者
   try {
     const accessSnap = await getDoc(doc(db, "aiStudy_settings", "access"));
-    const admins = accessSnap.exists() ? (accessSnap.data().admins || []) : [];
-    if (!admins.map(a => a.toLowerCase()).includes(user.email.toLowerCase())) throw new Error("not-admin");
+    const acc = accessSnap.exists() ? accessSnap.data() : {};
+    // 管理者に加えて「運営」も勉強会の管理ができる（メンバー・権限の保存は管理者のみ）
+    const staffOps = [...(acc.admins || []), ...(acc.ops || [])];
+    if (!staffOps.map(a => a.toLowerCase()).includes(user.email.toLowerCase())) throw new Error("not-admin");
     enterPanel(accessSnap.data());
   } catch (e) {
     $("gate").hidden = false; $("panel").hidden = true;
@@ -370,6 +379,11 @@ async function enterPanel(access) {
   if (d.startAt) $("fStartAt").value = d.startAt.slice(0, 16);
   else $("fStartAt").value = "2026-07-17T18:00";
   renderAgendaEditor(Array.isArray(d.agenda) ? d.agenda : []);
+  renderPresenterEditor(Array.isArray(d.presenters) ? d.presenters : []);
+  getDocs(collection(db, "aiStudy_employees")).then(snap => {
+    employeesByName = {};
+    $("empNames").innerHTML = snap.docs.filter(x => x.data().active !== false).map(x => { employeesByName[x.data().name] = x.id; return `<option value="${esc(x.data().name)}">${esc(x.data().dept || "")}</option>`; }).join("");
+  }).catch(() => {});
 
   surveyQuestions = normalizeSurveyQuestions(d.surveyQuestions);
   renderSurveyQuestionsEditor();
@@ -398,6 +412,30 @@ function slotRow(it = {}) {
   return row;
 }
 $("btnAddSlot").addEventListener("click", () => $("agendaEditor").appendChild(slotRow()));
+
+/* 発表者編集（名前・メール・発表内容） */
+let employeesByName = {};
+function renderPresenterEditor(items) {
+  const box = $("presenterEditor");
+  box.innerHTML = "";
+  items.forEach(it => box.appendChild(presenterRow(it)));
+}
+function presenterRow(it = {}) {
+  const row = document.createElement("div");
+  row.className = "agenda-item presenter-item";
+  row.innerHTML = `
+    <input type="text" class="p-name" list="empNames" placeholder="発表者の名前" value="${esc(it.name)}">
+    <input type="email" class="p-email" placeholder="メール（名前を選ぶと自動入力）" value="${esc(it.email)}">
+    <input type="text" class="p-topic" placeholder="発表の内容（例：NotebookLMで録音を要約）" value="${esc(it.topic)}">
+    <button class="btn-mini" type="button">削除</button>`;
+  row.querySelector(".p-name").addEventListener("change", e => {
+    const email = employeesByName[e.target.value.trim()];
+    if (email && !row.querySelector(".p-email").value) row.querySelector(".p-email").value = email;
+  });
+  row.querySelector(".btn-mini").addEventListener("click", () => row.remove());
+  return row;
+}
+$("btnAddPresenter").addEventListener("click", () => $("presenterEditor").appendChild(presenterRow()));
 
 /* アンケート項目編集 */
 function renderSurveyQuestionsEditor() {
@@ -486,6 +524,11 @@ $("btnSaveEvent").addEventListener("click", async () => {
     title: r.querySelector(".s-title").value.trim(),
     desc:  r.querySelector(".s-desc").value.trim(),
   })).filter(a => a.title);
+  const presenters = [...document.querySelectorAll(".presenter-item")].map(r => ({
+    name:  r.querySelector(".p-name").value.trim(),
+    email: r.querySelector(".p-email").value.trim().toLowerCase(),
+    topic: r.querySelector(".p-topic").value.trim(),
+  })).filter(p => p.name);
   const startLocal = $("fStartAt").value; // "YYYY-MM-DDTHH:mm"
   try {
     $("btnSaveEvent").disabled = true;
@@ -498,6 +541,7 @@ $("btnSaveEvent").addEventListener("click", async () => {
       description: $("fDesc").value.trim(),
       startAt: startLocal ? startLocal + ":00+09:00" : null,
       agenda,
+      presenters,
     }, { merge: true });
     toast("イベント情報を保存しました");
   } catch (e) { toast("保存に失敗しました: " + e.message, true); }
@@ -513,7 +557,7 @@ $("btnSaveAccess").addEventListener("click", async () => {
   if (me && !admins.includes(me) && !confirm("自分自身が管理者一覧に含まれていません。保存するとこのページにアクセスできなくなります。続行しますか?")) return;
   try {
     $("btnSaveAccess").disabled = true;
-    await setDoc(doc(db, "aiStudy_settings", "access"), { admins, members });
+    await setDoc(doc(db, "aiStudy_settings", "access"), { admins, members }, { merge: true }); // 運営・経営閲覧の設定を消さない
     $("fAdmins").value = admins.join("\n");
     $("fMembers").value = members.join("\n");
     accessMembers = [...new Set([...members, ...admins])];
@@ -674,6 +718,21 @@ function renderSurvey(){
     const bars=Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([name,n])=>`<div class="topic-row"><span>${esc(name)}</span><span class="topic-bar"><i style="width:${rows.length?n/rows.length*100:0}%"></i></span><b>${n}</b></div>`).join("")||"回答はまだありません。";
     return `<h3 style="font-size:14px">${esc(q.label)}</h3><div style="margin:12px 0 25px;color:var(--muted)">${bars}</div>`;
   }).join("");
+
+  // 発表者ごとの評価（平均点・良かった点・改善点）
+  const pres={};
+  rows.forEach(r=>(Array.isArray(r.presenterReviews)?r.presenterReviews:[]).forEach(v=>{
+    const key=(v.email||v.name)+"__"+(r.eventDate||"");
+    pres[key]=pres[key]||{name:v.name,topic:v.topic,date:r.eventDate||"",scores:[],good:[],improve:[]};
+    if(v.score)pres[key].scores.push(Number(v.score));
+    if(v.good)pres[key].good.push(v.good);
+    if(v.improve)pres[key].improve.push(v.improve);
+  }));
+  $("presenterResults").innerHTML=Object.values(pres).sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(p=>{
+    const avg=p.scores.length?(p.scores.reduce((a,b)=>a+b,0)/p.scores.length).toFixed(1):"—";
+    const list=(arr,label)=>arr.length?`<dt>${label}（${arr.length}件）</dt><dd><ul style="margin:0;padding-left:18px">${arr.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></dd>`:"";
+    return `<details class="respondent-card"><summary><span>${esc(p.name)}${p.topic?`「${esc(p.topic)}」`:""}</span><span class="respondent-meta">${esc(p.date)} · 平均 ${avg} / 5 · ${p.scores.length}件</span></summary><div class="respondent-body"><dl class="answer-grid">${list(p.good,"良かった点")}${list(p.improve,"改善が必要だと思った点")}</dl></div></details>`;
+  }).join("")||'<p class="desc">発表者の評価はまだありません。</p>';
 
   // メールアドレスを優先キーにして、同じ人から複数回届いた回答も1か所にまとめる。
   const respondents=new Map();

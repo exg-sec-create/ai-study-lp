@@ -94,9 +94,24 @@ service cloud.firestore {
     function aiStudyIsStaff() {
       return aiStudySignedIn()
         && request.auth.token.email_verified == true
+        && !aiStudyIsRetired()
         && (aiStudyEmail().matches('.*@(ych-exceed[.]com|besto-haus[.]com|exceed-group[.]co[.]jp|yamagata[.]pg-house[.]jp)$')
             || aiStudyEmail() in aiStudyAccess().get('members', [])
             || aiStudyIsAdmin());
+    }
+    // 社員マスタ（スプレッドシートから同期）で退職になっている人は社員として扱わない
+    function aiStudyIsRetired() {
+      return exists(/databases/$(database)/documents/aiStudy_employees/$(aiStudyEmail()))
+        && get(/databases/$(database)/documents/aiStudy_employees/$(aiStudyEmail())).data.get('active', true) == false;
+    }
+    // 運営：勉強会の管理・運営コンソール・社長ページを使える（権限の設定は管理者のみ）
+    function aiStudyIsOps() {
+      return aiStudyIsAdmin()
+        || (aiStudySignedIn() && aiStudyEmail() in aiStudyAccess().get('ops', []));
+    }
+    // 社長ページ（ceo.html）を見られる人：管理者・運営・経営閲覧（proposalViewers）
+    function aiStudyCanViewExec() {
+      return aiStudyIsOps() || aiStudyCanViewProposal();
     }
     function aiStudyLikePath(caseId) {
       return /databases/$(database)/documents/aiStudy_likes/$(caseId + '_' + request.auth.uid);
@@ -104,7 +119,8 @@ service cloud.firestore {
     // アンバサダー制度の提案ページを閲覧できる人（社長など）。admins は自動的に含む
     function aiStudyCanViewProposal() {
       return aiStudyIsAdmin()
-        || (aiStudySignedIn() && aiStudyEmail() in aiStudyAccess().get('proposalViewers', []));
+        || (aiStudySignedIn() && (aiStudyEmail() in aiStudyAccess().get('proposalViewers', [])
+                                  || aiStudyEmail() in aiStudyAccess().get('ops', [])));
     }
     function aiStudyIsMember() {
       // 管理者は自動的に回答権も持つ
@@ -116,13 +132,14 @@ service cloud.firestore {
     // 閲覧: 誰でも(LP表示用) / 編集: 管理者のみ
     match /aiStudy_settings/event {
       allow read: if true;
-      allow write: if aiStudyIsAdmin();
+      allow write: if aiStudyIsOps();
     }
 
     // ---------- AI勉強会: 権限リスト ----------
     // 読み書きとも管理者のみ(=読めるか否かで管理者判定)
     match /aiStudy_settings/access {
-      allow read, write: if aiStudyIsAdmin();
+      allow read: if aiStudyIsOps();
+      allow write: if aiStudyIsAdmin();
     }
 
     // ---------- AI勉強会: 出欠回答 ----------
@@ -140,12 +157,13 @@ service cloud.firestore {
     // ---------- AI勉強会: 実施後の出欠記録 ----------
     // 管理者が実施日ごとの出席・欠席・備考を確定、修正するための台帳
     match /aiStudy_attendance/{attendanceId} {
-      allow read, write: if aiStudyIsAdmin();
+      allow read: if aiStudyCanViewExec();
+      allow write: if aiStudyIsOps();
     }
 
     // ---------- AI勉強会: 参加後アンケート ----------
     match /aiStudy_surveys/{surveyId} {
-      allow read: if aiStudyIsAdmin();
+      allow read: if aiStudyCanViewExec();
       // アンケートは回答権リストへの登録有無にかかわらず、Google ログイン済みの
       // 参加者が回答できるようにする。保存データはログイン本人にひも付ける。
       allow create: if aiStudyIsStaff()
@@ -162,7 +180,7 @@ service cloud.firestore {
     // 回答者は本人の結果だけを保存・参照でき、全体集計は管理者だけが閲覧できます。
     match /aiStudy_aiDiagnostics/{uid} {
       allow read: if aiStudySignedIn()
-        && (request.auth.uid == uid || aiStudyIsAdmin());
+        && (request.auth.uid == uid || aiStudyCanViewExec());
       allow create, update: if aiStudyIsStaff()
         && request.auth.uid == uid
         && request.resource.data.uid == request.auth.uid
@@ -178,7 +196,7 @@ service cloud.firestore {
 
     // 診断は回答のたびに追記し、過去結果を上書きせず成長を確認できるようにします。
     match /aiStudy_aiDiagnosticResponses/{responseId} {
-      allow read: if aiStudyIsAdmin();
+      allow read: if aiStudyCanViewExec();
       allow create: if aiStudyIsStaff()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email.lower() == aiStudyEmail()
@@ -225,23 +243,33 @@ service cloud.firestore {
     // ---------- 運営コンソール: AIツール利用者台帳（console.html） ----------
     // ドキュメントIDは利用者のメール（小文字）。付与・変更・卒業の記録は管理者のみ
     match /aiStudy_licenses/{email} {
-      allow read, write: if aiStudyIsAdmin();
+      allow read: if aiStudyCanViewExec();
+      allow write: if aiStudyIsOps();
     }
 
     // ---------- 運営コンソール: Claude 週次解析の結果（Slack・所見） ----------
     // 書き込みは週1回の Claude 解析（tools/claude-weekly）が Firebase CLI のログイン権限で行う。
     // IAM 権限での書き込みはこのルールの影響を受けない（ブラウザからは書けない）。
     match /aiStudy_slackThreads/{threadId} {
-      allow read: if aiStudyIsAdmin();
+      allow read: if aiStudyCanViewExec();
       allow write: if false;
     }
     match /aiStudy_slackSync/{docId} {
-      allow read: if aiStudyIsAdmin();
+      allow read: if aiStudyCanViewExec();
       allow write: if false;
     }
     match /aiStudy_insights/{docId} {
-      allow read: if aiStudyIsAdmin();
+      allow read: if aiStudyCanViewExec();
       allow write: if false;
+    }
+
+    // ---------- 社員名簿（スプレッドシート「基本社員データ」から Claude が同期） ----------
+    // 社員IDごと。メールとの紐付け（email）だけは管理者が画面から直せる
+    match /aiStudy_staffRoster/{staffId} {
+      allow read: if aiStudyIsOps();
+      allow update: if aiStudyIsAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','emailLinkedBy']);
+      allow create, delete: if false;
     }
 
     // ---------- 上記以外は全拒否 ----------
