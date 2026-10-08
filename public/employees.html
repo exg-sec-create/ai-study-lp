@@ -4,99 +4,231 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
-<title>社員マスタ管理 | AI STUDY</title>
+<title>社員マスタ・権限 | AI STUDY</title>
 <link rel="stylesheet" href="./assets/theme.css">
 <style>
   .hidden { display:none !important; }
-  textarea.ai-input { min-height:220px; font-family:ui-monospace,Menlo,monospace; font-size:12px; }
-  .msg { margin-top:10px; font-size:13px; } .ok { color:var(--teal); } .err { color:var(--coral); }
-  code { font-family:ui-monospace,Menlo,monospace; font-size:12px; background:rgba(255,255,255,.06); padding:1px 6px; border-radius:6px; }
-  .acts { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .user-line { display:flex; justify-content:flex-end; align-items:center; gap:10px; font-size:12px; color:var(--muted); padding-top:14px; }
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:18px 0 12px; }
+  .toolbar .ai-input { max-width:260px; padding:8px 12px; }
+  .fchip { border:1px solid var(--line-strong); background:none; color:var(--muted); border-radius:999px; padding:5px 12px; font-size:12px; cursor:pointer; font-family:inherit; }
+  .fchip.on { color:var(--text); background:var(--violet-soft); border-color:var(--violet); }
+  .ai-table td .nm { font-weight:700; } .ai-table td .sub { font-size:11px; color:var(--muted); }
+  .role-sel { padding:6px 30px 6px 10px; font-size:12px; min-width:118px; }
+  .role-sel.admin { border-color:var(--violet); } .role-sel.ops { border-color:var(--teal); } .role-sel.amb { border-color:var(--gold); }
+  .ck { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--muted); cursor:pointer; white-space:nowrap; }
+  .ck input { accent-color:var(--violet); width:16px; height:16px; }
+  .link-row { display:flex; gap:6px; } .link-row .ai-input { padding:6px 10px; font-size:12px; min-width:200px; }
+  .warn { color:var(--gold); font-size:12px; }
+  .retired td { opacity:.6; }
+  .roles-help { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
+  .roles-help div { border:1px solid var(--line); border-radius:var(--radius-sm); padding:10px 12px; background:rgba(18,23,43,.55); font-size:12px; color:var(--muted); }
+  .roles-help b { display:block; color:var(--text); font-size:13px; margin-bottom:2px; }
+  .toast { position:fixed; right:16px; bottom:20px; z-index:90; background:var(--surface-3); border:1px solid var(--line-strong); color:var(--text); padding:11px 16px; border-radius:12px; font-size:13px; opacity:0; transform:translateY(8px); transition:.25s; pointer-events:none; }
+  .toast.show { opacity:1; transform:none; }
 </style>
 </head>
 <body>
 <div id="ai-nav" data-page="employees"></div>
 <script src="./assets/nav.js"></script>
 <main class="ai-main"><div class="ai-wrap">
+  <div class="user-line" id="user-line"></div>
   <section class="ai-hero">
-    <div class="ai-eyebrow">Employee Master</div>
-    <h1 class="ai-title">社員<span class="grad">マスタ</span></h1>
-    <p class="ai-lead">事例投稿フォームで氏名・部門を自動判定するための社員マスタ（Firestore <code>aiStudy_employees</code>）を登録します。個人情報をコードに書かずに済むよう、データはここからFirestoreにだけ保存します。管理者のみ利用できます。</p>
+    <div class="ai-eyebrow">Employees &amp; Access</div>
+    <h1 class="ai-title">社員マスタ<span class="grad">・権限</span></h1>
+    <p class="ai-lead">社員の一覧は、スプレッドシート「基本社員データ」からClaudeが毎週自動で取り込みます（新しく入った人は「一般」から始まります）。ここでは一人ずつ権限を選ぶだけです。</p>
   </section>
 
   <div id="gate" class="ai-card ai-gate">
-    <h2>管理者ログイン</h2>
+    <h2>運営・管理者ログイン</h2>
+    <p>閲覧は運営・管理者、権限の変更は管理者のみです。</p>
     <button class="ai-btn white" id="login" type="button">Googleでログイン</button>
-    <div class="msg err" id="gate-msg"></div>
+    <div class="ai-status err hidden" id="gate-err" style="margin-top:16px"></div>
   </div>
 
   <div id="app" class="hidden">
-    <div class="ai-card">
-      <h3>CSVを貼り付けて登録</h3>
-      <p style="color:var(--muted);font-size:13px;margin:0 0 10px">1行目は見出し <code>email,name,dept,role</code>。同じメールの人は上書きされます。</p>
-      <textarea class="ai-input" id="csv" placeholder="email,name,dept,role&#10;taro@example.com,山田 太郎,営業,"></textarea>
-      <div class="acts"><button class="ai-btn" id="preview" type="button">確認する</button>
-      <button class="ai-btn primary hidden" id="save" type="button">この内容で登録する</button></div>
-      <div id="preview-box" style="margin-top:12px"></div>
-      <div class="msg" id="msg"></div>
+    <div class="ai-stats" id="stats"></div>
+    <div class="ai-note" style="margin-top:14px" id="sync-note"></div>
+
+    <div class="toolbar">
+      <input class="ai-input" id="q" placeholder="氏名・部署・メールで検索">
+      <span id="filters"></span>
     </div>
-    <div class="ai-card">
-      <h3>登録済み <span id="count"></span></h3>
-      <button class="ai-btn sm" id="load" type="button">一覧を表示</button>
-      <div id="list" style="margin-top:12px"></div>
+    <div class="ai-table-wrap"><table class="ai-table" id="table"></table></div>
+
+    <div class="ai-sec">
+      <div class="ai-sec-head"><h2>権限の種類</h2><span class="en">Roles</span>
+        <p>見られるページの一覧と、メールアドレスでの確認は <a href="./console.html">運営コンソール</a> の「権限マップ・確認」で見られます。</p></div>
+      <div class="roles-help">
+        <div><b>一般</b>社内アカウントでログインすれば、事例投稿・ダッシュボード・アンケート・診断が使えます。最初は全員これです。</div>
+        <div><b>アンバサダー</b>一般＋アンバサダー名簿に載ります（任命日・付与ツール・判定の対象）。</div>
+        <div><b>運営</b>勉強会の管理・運営コンソール・社長ダッシュボード・社員マスタの閲覧。</div>
+        <div><b>管理</b>運営＋権限の変更・社員のメール紐付け。</div>
+        <div><b>経営閲覧（チェック）</b>社長ダッシュボードとアンバサダー運用設計を見て、判断を残せます。社長など。</div>
+        <div><b>出欠対象（チェック）</b>勉強会の出欠管理の対象者。社外ドメインの人は、ここに入れると社員として扱われます。</div>
+      </div>
     </div>
   </div>
 </div></main>
+<div class="toast" id="toast" role="status"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, getDocs, collection, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, getDocs, setDoc, updateDoc, collection, arrayUnion, arrayRemove, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
 const $ = id => document.getElementById(id);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-let rows = [];
+const lower = s => String(s || '').trim().toLowerCase();
+const isEmail = s => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s);
+const toast = m => { const t = $('toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600); };
+const ACCESS = doc(db, 'aiStudy_settings', 'access');
+const ROLE_LABEL = { general:'一般', amb:'アンバサダー', ops:'運営', admin:'管理' };
 
-$('login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(e => { $('gate-msg').textContent = e.message; });
-onAuthStateChanged(auth, async u => {
-  if(!u) return;
-  try { const a = await getDoc(doc(db, 'aiStudy_settings', 'access')); if(!a.exists()) throw 0; }
-  catch(e){ $('gate-msg').textContent = 'このアカウントは管理者ではありません。'; return; }
-  $('gate').classList.add('hidden'); $('app').classList.remove('hidden');
+let me = null, isAdmin = false, access = { admins:[], ops:[], members:[], proposalViewers:[] };
+let roster = [], licenses = {}, syncInfo = null, filter = 'active', q = '';
+
+function roleOf(email){
+  const e = lower(email);
+  if(!e) return 'general';
+  if(access.admins.includes(e)) return 'admin';
+  if(access.ops.includes(e)) return 'ops';
+  const l = licenses[e];
+  if(l && ['active','yellow','waiting'].includes(l.status)) return 'amb';
+  return 'general';
+}
+function rows(){
+  const inRoster = new Set(roster.map(r => lower(r.email)).filter(Boolean));
+  // 名簿にないが権限を持っているアカウント（社外ドメインなど）も表示する
+  const extra = [...new Set([...access.admins, ...access.ops, ...access.proposalViewers, ...access.members])].filter(e => !inRoster.has(e))
+    .map(e => ({ id: '', name: '', dept: '', email: e, status: '名簿外', active: true, extra: true }));
+  return [...roster, ...extra];
+}
+function render(){
+  const all = rows();
+  const act = roster.filter(r => r.active);
+  const linked = act.filter(r => r.email);
+  const withRole = all.filter(r => r.email && roleOf(r.email) !== 'general');
+  const retiredWithRole = all.filter(r => !r.active && r.email && (roleOf(r.email) !== 'general' || access.proposalViewers.includes(lower(r.email)) || access.members.includes(lower(r.email))));
+  const last = syncInfo?.lastSyncAt?.toDate ? syncInfo.lastSyncAt.toDate() : null;
+  $('stats').innerHTML = `
+    <div class="ai-stat"><div class="k">在職</div><div class="v">${act.length}<small>名</small></div></div>
+    <div class="ai-stat accent"><div class="k">メール紐付け済み</div><div class="v">${linked.length}<small>名</small></div></div>
+    <div class="ai-stat"><div class="k">未紐付け（ログインできるが名前不明）</div><div class="v" style="color:${act.length - linked.length ? 'var(--gold)' : 'inherit'}">${act.length - linked.length}<small>名</small></div></div>
+    <div class="ai-stat"><div class="k">権限あり（一般以外）</div><div class="v">${withRole.length}<small>名</small></div></div>`;
+  $('sync-note').innerHTML = `最終同期：${last ? esc(last.toLocaleString('ja-JP')) : 'まだ同期されていません'}　／　毎週月曜にClaudeが自動で取り込みます。すぐ反映したいときは、Claudeアプリのサイドバー「スケジュール」→「社員マスタを今すぐ同期」をRun nowしてください。` +
+    (retiredWithRole.length ? `<br><span class="warn">⚠ 退職者に権限が残っています：${retiredWithRole.map(r => esc(r.name || r.email)).join('、')}（「退職」で絞り込んで「一般」に戻してください）</span>` : '');
+
+  const counts = { active: act.length, unlinked: act.length - linked.length, role: withRole.length, retired: roster.filter(r => !r.active).length };
+  $('filters').innerHTML = [['active','在職'], ['unlinked','未紐付け'], ['role','権限あり'], ['retired','退職'], ['all','すべて']]
+    .map(([k, l]) => `<button class="fchip${filter === k ? ' on' : ''}" data-f="${k}" type="button">${l}${counts[k] != null ? ' ' + counts[k] : ''}</button>`).join('');
+
+  const list = all.filter(r => filter === 'all' ? true : filter === 'active' ? r.active : filter === 'unlinked' ? r.active && !r.email && !r.extra : filter === 'role' ? r.email && (roleOf(r.email) !== 'general' || access.proposalViewers.includes(lower(r.email))) : !r.active)
+    .filter(r => !q || `${r.name} ${r.dept} ${r.division || ''} ${r.email || ''}`.toLowerCase().includes(q))
+    .sort((a, b) => (b.active - a.active) || String(a.division || '').localeCompare(String(b.division || ''), 'ja') || String(a.name).localeCompare(String(b.name), 'ja'));
+  const dis = isAdmin ? '' : 'disabled';
+  $('table').innerHTML = `<thead><tr><th>氏名</th><th>部署</th><th>メール</th><th>権限</th><th>経営閲覧</th><th>出欠対象</th></tr></thead><tbody>` +
+    list.map(r => {
+      const e = lower(r.email), role = roleOf(e);
+      const emailCell = e ? `<span class="latin" style="font-size:12px">${esc(e)}</span>`
+        : r.extra ? '' : isAdmin ? `<div class="link-row"><input class="ai-input" data-linkin="${esc(r.id)}" placeholder="メールを入力して紐付け" type="email"><button class="ai-btn sm" data-link="${esc(r.id)}" type="button">紐付け</button></div>` : '<span class="warn">未紐付け</span>';
+      const sel = e ? `<select class="ai-input role-sel ${role}" data-role="${esc(e)}" ${dis}>${Object.entries(ROLE_LABEL).map(([k, l]) => `<option value="${k}"${k === role ? ' selected' : ''}>${l}</option>`).join('')}</select>` : '<span class="sub">メール紐付け後に設定</span>';
+      const ck = (list, key) => e ? `<label class="ck"><input type="checkbox" data-ck="${key}" data-email="${esc(e)}" ${access[list].includes(e) ? 'checked' : ''} ${dis}></label>` : '';
+      return `<tr class="${r.active ? '' : 'retired'}"><td><div class="nm">${esc(r.name || '（名簿外のアカウント）')}</div><div class="sub">${r.extra ? '社員名簿にないアカウント' : `${esc(r.employeeNo ? 'No.' + r.employeeNo + '・' : '')}入社 ${esc(r.joinedAt || '—')}${r.active ? '' : '・' + esc(r.status) + (r.leftAt ? ' ' + esc(r.leftAt) : '')}`}</div></td>
+        <td>${esc(r.dept || '')}<div class="sub">${esc(r.division && r.division !== r.dept ? r.division : '')}</div></td>
+        <td>${emailCell}</td><td>${sel}</td><td>${ck('proposalViewers', 'viewer')}</td><td>${ck('members', 'member')}</td></tr>`;
+    }).join('') + (list.length ? '' : '<tr><td colspan="6"><div class="ai-empty">該当する人はいません</div></td></tr>') + '</tbody>';
+}
+
+$('filters').addEventListener('click', e => { const b = e.target.closest('[data-f]'); if(b){ filter = b.dataset.f; render(); } });
+$('q').addEventListener('input', e => { q = e.target.value.trim().toLowerCase(); render(); });
+
+// 権限の変更（管理者のみ）。access の各リストを1人ずつ追加・削除する
+$('table').addEventListener('change', async e => {
+  const el = e.target;
+  if(el.dataset.role){
+    const email = el.dataset.role, next = el.value, prev = roleOf(email);
+    const name = roster.find(r => lower(r.email) === email)?.name || email;
+    const lic = licenses[email];
+    let msg = `${name} の権限を「${ROLE_LABEL[next]}」にしますか？`;
+    if(next === 'amb' && !lic) msg += '\n（アンバサダー名簿に「利用中」として登録します。付与ツールは運営コンソールで変更できます）';
+    if(next === 'general' && lic && ['active','yellow','waiting'].includes(lic.status)) msg += '\n（アンバサダー名簿の状態を「卒業」にします）';
+    if(email === lower(me.email) && prev === 'admin' && next !== 'admin') msg += '\n※自分の管理権限が外れます。';
+    if(!confirm(msg)){ el.value = prev; return; }
+    try {
+      await updateDoc(ACCESS, {
+        admins: next === 'admin' ? arrayUnion(email) : arrayRemove(email),
+        ops: next === 'ops' ? arrayUnion(email) : arrayRemove(email),
+      });
+      access.admins = access.admins.filter(x => x !== email); access.ops = access.ops.filter(x => x !== email);
+      if(next === 'admin') access.admins.push(email);
+      if(next === 'ops') access.ops.push(email);
+      const r = roster.find(x => lower(x.email) === email) || {};
+      if(next === 'amb' && !lic){
+        const rec = { email, name: r.name || '', dept: r.dept || '', tool: 'chatgpt', status: 'active', grantedAt: new Date().toISOString().slice(0, 10),
+          presentations: [], activeDays: {}, decisions: [], history: [{ at: new Date().toISOString(), by: lower(me.email), tool: 'chatgpt', status: 'active' }], updatedAt: serverTimestamp(), updatedBy: lower(me.email) };
+        await setDoc(doc(db, 'aiStudy_licenses', email), rec); licenses[email] = rec;
+      } else if(next === 'amb' && lic && lic.status === 'graduated'){
+        await updateDoc(doc(db, 'aiStudy_licenses', email), { status: 'active', updatedAt: serverTimestamp(), updatedBy: lower(me.email) }); lic.status = 'active';
+      }
+      if(next === 'general' && lic && ['active','yellow','waiting'].includes(lic.status)){
+        await updateDoc(doc(db, 'aiStudy_licenses', email), { status: 'graduated', updatedAt: serverTimestamp(), updatedBy: lower(me.email) }); lic.status = 'graduated';
+      }
+      render(); toast(`${name}：${ROLE_LABEL[next]} に変更しました`);
+    } catch(err){ el.value = prev; toast('変更できませんでした：' + (err.code || err.message)); }
+  }
+  if(el.dataset.ck){
+    const email = el.dataset.email, key = el.dataset.ck === 'viewer' ? 'proposalViewers' : 'members';
+    try {
+      await updateDoc(ACCESS, { [key]: el.checked ? arrayUnion(email) : arrayRemove(email) });
+      access[key] = el.checked ? [...new Set([...access[key], email])] : access[key].filter(x => x !== email);
+      render(); toast(el.checked ? '追加しました' : '外しました');
+    } catch(err){ el.checked = !el.checked; toast('変更できませんでした：' + (err.code || err.message)); }
+  }
 });
 
-function parseCsv(text){
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-  if(lines[0] && /^email\s*,/i.test(lines[0])) lines.shift();
-  return lines.map(l => { const [email='', name='', dept='', role=''] = l.split(',').map(s => s.trim()); return { email: email.toLowerCase(), name, dept, role }; })
-    .filter(r => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(r.email) && r.name);
-}
-$('preview').onclick = () => {
-  rows = parseCsv($('csv').value);
-  $('preview-box').innerHTML = rows.length ? `<div class="ai-table-wrap"><table class="ai-table"><tr><th>email</th><th>氏名</th><th>部門</th><th>役職</th></tr>${rows.map(r=>`<tr><td>${esc(r.email)}</td><td>${esc(r.name)}</td><td>${esc(r.dept)}</td><td>${esc(r.role)}</td></tr>`).join('')}</table></div>` : '<p class="err">登録できる行がありません。</p>';
-  $('save').classList.toggle('hidden', !rows.length);
-  $('msg').textContent = rows.length ? `${rows.length}件を登録します。内容を確認してください。` : '';
-};
-$('save').onclick = async () => {
-  $('save').disabled = true;
+// メールの紐付け（管理者のみ）：名簿の行とメールを結び、社員マスタ（氏名・部署の自動判定）にも登録する
+$('table').addEventListener('click', async e => {
+  const b = e.target.closest('[data-link]'); if(!b) return;
+  const id = b.dataset.link, r = roster.find(x => x.id === id);
+  const email = lower(document.querySelector(`[data-linkin="${CSS.escape(id)}"]`).value);
+  if(!isEmail(email)){ toast('メールアドレスを正しく入力してください'); return; }
+  if(roster.some(x => lower(x.email) === email)){ toast('このメールはすでに別の人に紐付いています'); return; }
   try {
-    for(let i = 0; i < rows.length; i += 400){
-      const b = writeBatch(db);
-      rows.slice(i, i + 400).forEach(r => b.set(doc(db, 'aiStudy_employees', r.email), { name:r.name, dept:r.dept, role:r.role }));
-      await b.commit();
-    }
-    $('msg').className = 'msg ok'; $('msg').textContent = `${rows.length}件を登録しました。`;
-    $('csv').value = ''; $('preview-box').innerHTML = ''; $('save').classList.add('hidden');
-  } catch(e){ $('msg').className = 'msg err'; $('msg').textContent = '登録に失敗しました：' + (e.code || e.message); }
-  finally { $('save').disabled = false; }
-};
-$('load').onclick = async () => {
-  const snap = await getDocs(collection(db, 'aiStudy_employees'));
-  $('count').textContent = `（${snap.size}件）`;
-  $('list').innerHTML = `<div class="ai-table-wrap"><table class="ai-table"><tr><th>email</th><th>氏名</th><th>部門</th><th>役職</th></tr>${snap.docs.map(d=>{ const x = d.data(); return `<tr><td>${esc(d.id)}</td><td>${esc(x.name)}</td><td>${esc(x.dept)}</td><td>${esc(x.role)}</td></tr>`; }).join('')}</table></div>`;
-};
+    await updateDoc(doc(db, 'aiStudy_staffRoster', id), { email, emailLinkedBy: lower(me.email) });
+    await setDoc(doc(db, 'aiStudy_employees', email), { name: r.name, dept: r.dept || '', division: r.division || '', employeeId: id, employeeNo: r.employeeNo || '', joinedAt: r.joinedAt || '', active: !!r.active }, { merge: true });
+    r.email = email; render(); toast(`${r.name} に ${email} を紐付けました`);
+  } catch(err){ toast('紐付けできませんでした：' + (err.code || err.message)); }
+});
+
+$('login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
+  if(err.code !== 'auth/popup-closed-by-user'){ $('gate-err').textContent = 'ログインに失敗しました：' + err.message; $('gate-err').classList.remove('hidden'); }
+});
+onAuthStateChanged(auth, async u => {
+  me = u;
+  $('user-line').innerHTML = u ? `<span>${esc(u.email)}</span><button class="ai-btn sm" type="button" id="logout">ログアウト</button>` : '';
+  if(u) $('logout').onclick = () => signOut(auth);
+  if(!u){ $('gate').classList.remove('hidden'); $('app').classList.add('hidden'); return; }
+  try {
+    const a = await getDoc(ACCESS); if(!a.exists()) throw new Error();
+    const d = a.data();
+    access = { admins:(d.admins || []).map(lower), ops:(d.ops || []).map(lower), members:(d.members || []).map(lower), proposalViewers:(d.proposalViewers || []).map(lower) };
+  } catch(err){ $('gate-err').textContent = `${u.email} には運営・管理の権限がありません。`; $('gate-err').classList.remove('hidden'); return; }
+  isAdmin = access.admins.includes(lower(u.email));
+  const [rs, ls, sy] = await Promise.all([
+    getDocs(collection(db, 'aiStudy_staffRoster')).catch(() => null),
+    getDocs(collection(db, 'aiStudy_licenses')).catch(() => null),
+    getDoc(doc(db, 'aiStudy_slackSync', 'employeesSync')).catch(() => null),
+  ]);
+  roster = []; rs?.forEach(d => roster.push({ id: d.id, ...d.data() }));
+  licenses = {}; ls?.forEach(d => { if(d.id !== '__config') licenses[lower(d.id)] = d.data(); });
+  syncInfo = sy?.exists() ? sy.data() : null;
+  $('gate').classList.add('hidden'); $('app').classList.remove('hidden');
+  if(!isAdmin) toast('閲覧のみ（権限の変更は管理者が行います）');
+  render();
+});
 </script>
 </body>
 </html>

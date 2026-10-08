@@ -887,7 +887,8 @@ async function loadHistory(){
 /* ---------------- load ---------------- */
 async function loadAll(){
   // 管理者判定: access ドキュメントはルール上 admins しか読めない
-  try { const a = await getDoc(ACCESS); isAdmin = a.exists(); viewers = a.exists() ? (a.data().proposalViewers || []) : []; }
+  // access は運営も読めるので、管理者かどうかは admins の一覧で判定する
+  try { const a = await getDoc(ACCESS); isAdmin = a.exists() && (a.data().admins || []).map(x => String(x).toLowerCase()).includes(user.email.toLowerCase()); viewers = a.exists() ? (a.data().proposalViewers || []) : []; }
   catch(err){ isAdmin = false; }
   $('mode-edit').disabled = !isAdmin;
   $('mode-edit').title = isAdmin ? '' : '管理者のみ修正できます';

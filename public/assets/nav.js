@@ -16,10 +16,11 @@
     { key: "board", href: "./board.html", label: "アイデア掲示板" },
   ];
   var OPS = [
+    { key: "ceo", href: "./ceo.html", label: "社長ダッシュボード" },
     { key: "console", href: "./console.html", label: "運営コンソール" },
     { key: "admin", href: "./admin.html", label: "勉強会の管理" },
     { key: "ambassador", href: "./ambassador.html", label: "アンバサダー運用設計" },
-    { key: "employees", href: "./employees.html", label: "社員マスタ" },
+    { key: "employees", href: "./employees.html", label: "社員マスタ・権限" },
     { key: "diagnosis-results", href: "./ai-diagnosis-results.html", label: "診断集計" },
   ];
 

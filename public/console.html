@@ -148,8 +148,12 @@
 
       <!-- ② 権限の設定 -->
       <section class="panel" id="t-roles">
-        <div class="ai-note" style="margin-bottom:14px">社内ドメイン（@ych-exceed.com・@besto-haus.com・@exceed-group.co.jp・@yamagata.pg-house.jp）のGoogleアカウントは、登録しなくても「社員」として事例投稿・ダッシュボードなどを使えます。社外ドメイン（Gmailなど）の社員は「出欠メンバー」に登録すると社員として扱われます。</div>
-        <div class="ai-grid3" id="role-lists"></div>
+        <div class="ai-card glow">
+          <h3>権限の設定は「社員マスタ・権限」に一本化しました</h3>
+          <p style="color:var(--muted);font-size:13px;margin:0 0 14px">スプレッドシートから取り込んだ社員の一覧で、一人ずつ「一般／アンバサダー／運営／管理」と「経営閲覧」「出欠対象」を選べます。新しく入った人は自動で「一般」になります。</p>
+          <a class="ai-btn primary" href="./employees.html">社員マスタ・権限を開く →</a>
+        </div>
+        <div id="role-lists" class="ai-hidden"></div>
       </section>
 
       <!-- ③ ツール利用者 -->
@@ -297,32 +301,45 @@ const statusOf = id => STATUS.find(s => s.id === id) || STATUS[0];
 const ROLES = [
   { id:'anyone', label:'誰でも', how:'ログイン不要' },
   { id:'staff', label:'社員', how:'社内ドメインのGoogleログイン、または出欠メンバーに登録' },
-  { id:'member', label:'出欠メンバー', how:'「権限の設定」→ 出欠メンバー（勉強会の出欠対象者）' },
-  { id:'viewer', label:'提案閲覧者', how:'「権限の設定」→ 提案ページ閲覧（社長など）' },
-  { id:'admin', label:'管理者', how:'「権限の設定」→ 管理者' },
+  { id:'member', label:'出欠対象', how:'社員マスタ・権限 →「出欠対象」にチェック（勉強会の出欠管理の対象者）' },
+  { id:'viewer', label:'経営閲覧', how:'社員マスタ・権限 →「経営閲覧」にチェック（社長など）' },
+  { id:'ops', label:'運営', how:'社員マスタ・権限 → 権限「運営」' },
+  { id:'admin', label:'管理', how:'社員マスタ・権限 → 権限「管理」' },
 ];
 // 各ページで、どの権限があれば何ができるか。v=見る・回答、e=編集・管理
 const PAGES = [
-  { name:'出欠LP（勉強会の案内）', href:'./index.html', desc:'案内は誰でも。欠席回答は出欠メンバーのみ', access:{ anyone:'v', staff:'v', member:'v+', viewer:'v', admin:'e' }, note:{ v:'案内を見られる（欠席回答は不可）', 'v+':'案内を見て、欠席回答ができる' } },
+  { name:'社長ダッシュボード', href:'./ceo.html', desc:'AI活用・勉強会・アカウント・アンバサダー・評価対象を1ページで', access:{ viewer:'v', ops:'v', admin:'v' } },
+  { name:'出欠LP（勉強会の案内）', href:'./index.html', desc:'案内は誰でも。欠席回答は出欠対象のみ', access:{ anyone:'v', staff:'v', member:'v+', viewer:'v', ops:'v', admin:'e' }, note:{ v:'案内を見られる（欠席回答は不可）', 'v+':'案内を見て、欠席回答ができる' } },
   { name:'参加後アンケート', href:'./survey.html', desc:'社員が回答', access:{ staff:'v', member:'v', admin:'e' } },
   { name:'AI IDEA BOARD（掲示板）', href:'./board.html', desc:'ログイン不要で閲覧・投稿', access:{ anyone:'v', staff:'v', member:'v', viewer:'v', admin:'e' } },
   { name:'事例投稿フォーム', href:'./form.html', desc:'社員が投稿', access:{ staff:'v', member:'v', admin:'v' } },
   { name:'活用ダッシュボード', href:'./dashboard.html', desc:'社員が閲覧', access:{ staff:'v', member:'v', admin:'e' } },
   { name:'AI活用レベル診断', href:'./ai-diagnosis.html', desc:'社員が回答（URLを知っている人のみ）', access:{ staff:'v', member:'v', admin:'v' } },
-  { name:'アンバサダー運用設計', href:'./ambassador.html', desc:'閲覧と社長判断は提案閲覧者、編集は管理者', access:{ viewer:'v', admin:'e' } },
-  { name:'勉強会の管理', href:'./admin.html', desc:'イベント・出欠・アンケート', access:{ admin:'e' } },
-  { name:'運営コンソール', href:'./console.html', desc:'このページ', access:{ admin:'e' } },
-  { name:'社員マスタ', href:'./employees.html', desc:'氏名・部署の登録', access:{ admin:'e' } },
+  { name:'アンバサダー運用設計', href:'./ambassador.html', desc:'閲覧と社長判断は経営閲覧・運営、編集は管理', access:{ viewer:'v', ops:'v', admin:'e' } },
+  { name:'勉強会の管理', href:'./admin.html', desc:'イベント・発表者・出欠・アンケート', access:{ ops:'e', admin:'e' } },
+  { name:'運営コンソール', href:'./console.html', desc:'名簿・判定・候補者・Slack', access:{ ops:'e', admin:'e' } },
+  { name:'社員マスタ・権限', href:'./employees.html', desc:'閲覧は運営、権限の変更は管理', access:{ ops:'v', admin:'e' } },
   { name:'診断集計', href:'./ai-diagnosis-results.html', desc:'診断結果の一覧', access:{ admin:'e' } },
 ];
 
-let me = null, access = { admins:[], members:[], proposalViewers:[] };
+let me = null, access = { admins:[], ops:[], members:[], proposalViewers:[] };
 let employees = {}, licenses = [], seatConfig = { chatgpt:6, claude:5 };
 let cases = [], threads = [], diags = {}, syncStatus = null;
 let attendance = [], surveys = [], diagResp = [], insights = [];
 let judgeConfig = { gateDays: 8, gateMonths: 4, keepScore: 40, promoteTop: 2 }, judgePeriod = '6m', candFilter = 'all';
 const ym = d => d ? d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') : '';
 const isQuestion = t => !t.kind || t.kind === 'question';
+// 発表の記録：名簿に手で書いた分＋アンケートの発表者評価から自動で分かる分（実施日ごとに1回）
+function presFor(l, from, to){
+  const map = new Map();
+  (l.presentations || []).forEach(p => map.set((p.date || '') + '|' + (p.title || ''), p));
+  surveys.forEach(v => (v.presenterReviews || []).forEach(r => {
+    if(lower(r.email) !== l.email || !v.eventDate) return;
+    const dup = [...map.values()].some(p => p.date === v.eventDate);
+    if(!dup) map.set(v.eventDate + '|auto', { date: v.eventDate, title: r.topic || '勉強会での発表', auto: true });
+  }));
+  return [...map.values()].filter(p => !from || (p.date && new Date(p.date) >= from && (!to || new Date(p.date) < to)));
+}
 // 「2026-09-04 タイトル」形式の発表記録を配列にする
 const parsePres = txt => String(txt || '').split(/\n/).map(l => l.trim()).filter(Boolean).map(l => { const m = l.match(/^(\d{4}-\d{2}-\d{2})\s*(.*)$/); return m ? { date: m[1], title: m[2] } : { date: '', title: l }; });
 const parseActive = txt => { const o = {}; String(txt || '').split(/\n/).forEach(l => { const m = l.trim().match(/^(\d{4}-\d{2})\s+(\d+)/); if(m) o[m[1]] = Number(m[2]); }); return o; };
@@ -342,14 +359,15 @@ function renderMatrix(){
 function rolesOf(email){
   const e = lower(email);
   const admin = access.admins.includes(e);
+  const ops = access.ops.includes(e) || admin;
   const member = access.members.includes(e) || admin;
   const viewer = access.proposalViewers.includes(e) || admin;
   const staff = isDomainStaff(e) || member || admin;
-  return { anyone:true, staff, member, viewer, admin };
+  return { anyone:true, staff, member, viewer, ops, admin };
 }
 function pageAccessFor(p, r){
   // 一番強い権限で判定
-  for(const id of ['admin','viewer','member','staff','anyone']){
+  for(const id of ['admin','ops','viewer','member','staff','anyone']){
     if(r[id] && p.access[id]) return { level:p.access[id], via:id };
   }
   return null;
@@ -368,9 +386,10 @@ function lookup(){
   const emp = employees[email];
   const lic = licenses.find(l => l.email === email);
   const roleTags = [
-    r.admin && '<span class="ai-tag">管理者</span>',
-    r.viewer && !r.admin && '<span class="ai-tag blue">提案閲覧者</span>',
-    access.members.includes(email) && '<span class="ai-tag teal">出欠メンバー</span>',
+    r.admin && '<span class="ai-tag">管理</span>',
+    r.ops && !r.admin && '<span class="ai-tag">運営</span>',
+    r.viewer && !r.admin && '<span class="ai-tag blue">経営閲覧</span>',
+    access.members.includes(email) && '<span class="ai-tag teal">出欠対象</span>',
     isDomainStaff(email) ? '<span class="ai-tag teal">社内ドメイン</span>' : (r.staff ? '' : '<span class="ai-tag coral">社外ドメイン・未登録</span>'),
     lic ? `<span class="ai-tag gold">${esc(toolOf(lic.tool).label)}・${esc(statusOf(lic.status).label)}</span>` : '<span class="ai-tag mute">AIツール未付与</span>',
   ].filter(Boolean).join('');
@@ -382,7 +401,7 @@ function lookup(){
     return `<div class="acc ${cls}"><span class="ic">${!a ? '—' : a.level === 'e' ? '◎' : '○'}</span><div><b>${esc(p.name)}</b><small>${esc(text)}${a ? `（${esc(roleName)}として）` : ''}</small></div></div>`;
   }).join('');
   const hints = [];
-  if(!r.staff) hints.push('社外ドメインのため、事例投稿・ダッシュボードを使うには「出欠メンバー」への登録が必要です。');
+  if(!r.staff) hints.push('社外ドメインのため、事例投稿・ダッシュボードを使うには「出欠対象」への登録が必要です。');
   if(lic && lic.status !== 'graduated' && !r.staff) hints.push('AIツールを付与していますが、社員としてログインできない状態です。');
   if(!emp) hints.push('社員マスタに未登録です。事例投稿のときに本人が部署を選ぶ形になります。');
   $('lookup-result').innerHTML = `
@@ -503,7 +522,7 @@ function renderLicenses(){
       <td class="latin">${esc(l.grantedAt || '—')}${days != null ? `<div class="sub">${days}日目</div>` : ''}</td>
       <td class="latin">${cs.count}</td>
       <td class="latin">${cs.monthlyHours}h${goal ? `<div class="sub">目標 ${goal}h（${Math.round(cs.monthlyHours / goal * 100)}%）</div>` : ''}</td>
-      <td class="latin">${(l.presentations || []).length}</td>
+      <td class="latin">${presFor(l).length}</td>
       <td class="latin">${ss.answers} / ${ss.resolved}</td>
       <td>${diag ? `<span class="ai-tag blue">LV.${esc(diag.level)}</span>` : '<span class="sub">未受験</span>'}</td>
       <td class="latin">${lastAct ? esc(lastAct.toLocaleDateString('ja-JP')) : '—'}</td>
@@ -677,7 +696,7 @@ function judgeRows(){
   const r = periodRange(judgePeriod), months = monthsIn(r).filter(m => m <= ym(new Date()));
   const rows = licenses.filter(l => ['active','yellow'].includes(l.status)).map(l => {
     const cs = caseStatsFor(l.email, r.from), ss = slackStatsFor(l.email, r.from);
-    const pres = (l.presentations || []).filter(p => p.date && new Date(p.date) >= r.from && new Date(p.date) < r.to).length;
+    const pres = presFor(l, r.from, r.to).length;
     const act = months.map(m => (l.activeDays || {})[m]).filter(v => typeof v === 'number');
     const metMonths = act.filter(v => v >= judgeConfig.gateDays).length;
     const needMonths = Math.min(judgeConfig.gateMonths, months.length);
@@ -848,7 +867,7 @@ async function safe(fn, fallback){ try { return await fn(); } catch(err){ consol
 const LOCAL = ['localhost','127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).has('local');
 if(LOCAL){
   me = { email:'admin@ych-exceed.com' };
-  access = { admins:['admin@ych-exceed.com'], members:['guest@gmail.com'], proposalViewers:['ceo@ych-exceed.com'] };
+  access = { admins:['admin@ych-exceed.com'], ops:['a1@ych-exceed.com'], members:['guest@gmail.com'], proposalViewers:['ceo@ych-exceed.com'] };
   employees = { 'admin@ych-exceed.com':{name:'運営 太郎',dept:'社長室'}, 'ceo@ych-exceed.com':{name:'社長 花子',dept:'役員'}, 'a1@ych-exceed.com':{name:'見本 一郎',dept:'CX課'}, 'a2@besto-haus.com':{name:'見本 二郎',dept:'営業'}, 'guest@gmail.com':{name:'外部 三郎',dept:'工事部'} };
   const d = n => new Date(Date.now() - n * 864e5);
   licenses = [
@@ -886,7 +905,7 @@ if(LOCAL){
     $('gate-err').textContent = `このアカウント（${u.email}）は管理者ではありません。`; $('gate-err').classList.remove('ai-hidden'); return;
   }
   const a = acc.data();
-  access = { admins:(a.admins || []).map(lower), members:(a.members || []).map(lower), proposalViewers:(a.proposalViewers || []).map(lower) };
+  access = { admins:(a.admins || []).map(lower), ops:(a.ops || []).map(lower), members:(a.members || []).map(lower), proposalViewers:(a.proposalViewers || []).map(lower) };
   $('gate').classList.add('ai-hidden'); $('app').classList.remove('ai-hidden');
   renderMatrix(); renderLists();
 

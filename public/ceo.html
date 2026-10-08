@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>社長ダッシュボード | AI STUDY</title>
+<link rel="stylesheet" href="./assets/theme.css">
+<style>
+  .hidden { display:none !important; }
+  .user-line { display:flex; justify-content:flex-end; align-items:center; gap:10px; font-size:12px; color:var(--muted); padding-top:14px; }
+  .bar-top { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:18px; }
+  .fchip { border:1px solid var(--line-strong); background:none; color:var(--muted); border-radius:999px; padding:6px 14px; font-size:13px; cursor:pointer; font-family:inherit; }
+  .fchip.on { color:var(--text); background:var(--violet-soft); border-color:var(--violet); }
+  .updated { margin-left:auto; font-size:12px; color:var(--faint); }
+
+  .summary { font-family:var(--font-serif); font-size:clamp(17px,2.4vw,21px); line-height:1.8; }
+  .summary b { background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent; font-family:var(--font-latin); font-size:1.1em; }
+
+  .blocks { display:grid; grid-template-columns:repeat(auto-fit,minmax(185px,1fr)); gap:12px; margin-top:16px; }
+  .block { border:1px solid var(--line); border-radius:var(--radius); background:linear-gradient(180deg,rgba(24,31,56,.75),rgba(18,23,43,.6)); padding:16px 18px; }
+  .block .t { font-size:12px; color:var(--muted); font-weight:700; letter-spacing:.06em; display:flex; justify-content:space-between; gap:8px; }
+  .block .t a { color:var(--faint); font-weight:400; text-decoration:none; }
+  .block .big { font-family:var(--font-latin); font-size:34px; font-weight:700; line-height:1.15; margin-top:6px; }
+  .block .big small { font-size:14px; color:var(--muted); font-family:var(--font); margin-left:3px; }
+  .block .big.grad-t { background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .block .rows { margin-top:8px; font-size:12px; color:var(--muted); display:grid; gap:3px; }
+  .block .rows b { color:var(--text); font-family:var(--font-latin); }
+  .delta.up { color:var(--teal); } .delta.down { color:var(--coral); }
+
+  .ai-table td .nm { font-weight:700; } .ai-table td .sub { font-size:11px; color:var(--muted); line-height:1.5; }
+  .num { font-family:var(--font-latin); font-weight:700; }
+  .meter { height:8px; background:rgba(255,255,255,.06); border-radius:99px; overflow:hidden; min-width:70px; margin-top:4px; }
+  .meter i { display:block; height:100%; background:var(--grad); border-radius:99px; }
+  .warn { color:var(--gold); font-size:12px; }
+  .chart svg { width:100%; height:auto; display:block; }
+  .rank { display:grid; grid-template-columns:30px 1fr; gap:12px; padding:12px 0; border-bottom:1px solid var(--line); }
+  .rank:last-child { border-bottom:none; }
+  .rank .no { width:28px; height:28px; border-radius:50%; background:var(--grad); color:#0b0e1a; display:grid; place-items:center; font-weight:700; font-family:var(--font-latin); font-size:13px; }
+  .rank .nm { font-weight:700; }
+  .rank .why { font-size:12px; color:var(--muted); margin-top:2px; }
+  .anchor { scroll-margin-top:80px; }
+  @media print {
+    .ai-header, .bar-top .fchip, .user-line, .no-print { display:none !important; }
+    body { background:#fff; color:#000; }
+  }
+</style>
+</head>
+<body>
+<div id="ai-nav" data-page="ceo"></div>
+<script src="./assets/nav.js"></script>
+<main class="ai-main"><div class="ai-wrap">
+  <div class="user-line" id="user-line"></div>
+  <section class="ai-hero" style="padding-bottom:10px">
+    <div class="ai-eyebrow">Executive Dashboard</div>
+    <h1 class="ai-title">社長<span class="grad">ダッシュボード</span></h1>
+    <p class="ai-lead">AI活用の状況を、このページだけで数字で把握できます。詳しく見たい項目は各ブロックの「詳細」から。</p>
+    <div class="bar-top">
+      <span id="periods"></span>
+      <button class="ai-btn sm no-print" type="button" onclick="window.print()">印刷 / PDF</button>
+      <span class="updated" id="updated"></span>
+    </div>
+  </section>
+
+  <div id="gate" class="ai-card ai-gate">
+    <h2>ログイン</h2>
+    <p>社長・経営閲覧・運営・管理のアカウントで見られます。</p>
+    <button class="ai-btn white" id="login" type="button">Googleでログイン</button>
+    <div class="ai-status err hidden" id="gate-err" style="margin-top:16px"></div>
+  </div>
+
+  <div id="app" class="hidden">
+    <!-- 結論 -->
+    <div class="ai-card glow"><div class="summary" id="summary"></div><div id="insight" style="margin-top:12px;font-size:13px;color:var(--muted)"></div></div>
+
+    <!-- 主要数字 -->
+    <div class="blocks" id="blocks"></div>
+
+    <!-- 1. AI活用 -->
+    <section class="ai-sec anchor" id="s-use">
+      <div class="ai-sec-head"><h2>AI活用の現状</h2><span class="en">Usage &amp; time saved</span><p>事例の投稿と削減時間。月間削減時間は「1回の削減分 × 月の実施回数」で計算しています。</p></div>
+      <div class="ai-grid2">
+        <div class="ai-card"><h3>月ごとの事例数と削減時間</h3><div class="chart" id="chart"></div></div>
+        <div class="ai-card"><h3>部署別の月間削減時間</h3><div id="by-dept"></div></div>
+      </div>
+      <div class="ai-card" style="margin-top:14px"><h3>削減効果が大きい事例（期間内）</h3><div class="ai-table-wrap"><table class="ai-table" id="top-cases"></table></div></div>
+    </section>
+
+    <!-- 2. 勉強会 -->
+    <section class="ai-sec anchor" id="s-study">
+      <div class="ai-sec-head"><h2>AI勉強会</h2><span class="en">Study sessions</span><p>参加者は「出欠記録の出席」と「参加後アンケートの回答者」を合わせて数えています。</p></div>
+      <div class="ai-table-wrap"><table class="ai-table" id="events"></table></div>
+    </section>
+
+    <!-- 3. アカウント -->
+    <section class="ai-sec anchor" id="s-acc">
+      <div class="ai-sec-head"><h2>アカウントの付与と使用率</h2><span class="en">Licenses</span><p>使用率＝直近の月間アクティブ日数 ÷ 20営業日（各ツールの管理画面の数字を運営が入力）。</p></div>
+      <div class="ai-table-wrap"><table class="ai-table" id="accounts"></table></div>
+    </section>
+
+    <!-- 4. アンバサダー -->
+    <section class="ai-sec anchor" id="s-amb">
+      <div class="ai-sec-head"><h2>アンバサダーの動き</h2><span class="en">Ambassadors</span><p>期間内の事例・発表・Slackでの対応。判定（昇格・卒業）は運営コンソールで半期ごとに行います。</p></div>
+      <div class="ai-table-wrap"><table class="ai-table" id="ambs"></table></div>
+    </section>
+
+    <!-- 5. 人事評価 -->
+    <section class="ai-sec anchor" id="s-eval">
+      <div class="ai-sec-head"><h2>人事評価で取り上げたい人</h2><span class="en">For evaluation</span><p>期間内の「時間削減・事例・発表（評価点）・Slackでの解決」から上位を出しています。評価の参考情報で、最終判断は面談で行ってください。</p></div>
+      <div class="ai-grid2">
+        <div class="ai-card"><h3>評価対象（貢献が大きい人）</h3><div id="eval-top"></div></div>
+        <div class="ai-card"><h3>フォローが必要な人</h3><div id="eval-follow"></div></div>
+      </div>
+    </section>
+  </div>
+</div></main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getFirestore, doc, getDoc, getDocs, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
+
+const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const lower = s => String(s || '').trim().toLowerCase();
+const toDate = v => v?.toDate ? v.toDate() : (v ? new Date(v) : null);
+const ym = d => d ? d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') : '';
+const r1 = n => Math.round(n * 10) / 10;
+const TOOL = { chatgpt:'ChatGPT Business', claude:'Claude Team', other:'その他' };
+const WORKDAYS = 20;
+
+let D = { employees:{}, cases:[], attendance:[], surveys:[], licenses:[], seats:{ chatgpt:6, claude:5 }, threads:[], insight:null };
+let period = '3m';
+const PERIODS = [['1m','今月'], ['3m','直近3か月'], ['6m','直近6か月'], ['all','全期間']];
+
+function range(){
+  const now = new Date();
+  if(period === 'all') return { from: new Date(2000, 0, 1), prevFrom: null, label: '全期間' };
+  const n = period === '1m' ? 1 : period === '3m' ? 3 : 6;
+  const from = new Date(now.getFullYear(), now.getMonth() - n + 1, 1);
+  return { from, prevFrom: new Date(now.getFullYear(), now.getMonth() - 2 * n + 1, 1), label: PERIODS.find(p => p[0] === period)[1] };
+}
+const nameOf = e => D.employees[lower(e)]?.name || '';
+const deptOf = e => D.employees[lower(e)]?.dept || '';
+const saved = c => c.beforeMin > 0 && c.afterMin != null ? Math.max(0, c.beforeMin - c.afterMin) : 0;
+const monthlyMin = c => saved(c) * (c.monthlyCount || 0);
+
+function eventsIn(from, to){
+  const ev = {};
+  const get = d => ev[d] = ev[d] || { date: d, present: new Set(), absent: new Set(), surveys: [], presenters: {} };
+  D.attendance.forEach(a => { if(!a.date) return; const e = get(a.date); (a.status === 'present' ? e.present : e.absent).add(lower(a.email)); });
+  D.surveys.forEach(v => { if(!v.eventDate || v.eventDate === 'event') return; const e = get(v.eventDate); e.present.add(lower(v.email)); e.absent.delete(lower(v.email)); e.surveys.push(v);
+    (v.presenterReviews || []).forEach(p => { const k = lower(p.email) || p.name; e.presenters[k] = e.presenters[k] || { name: p.name, email: lower(p.email), topic: p.topic, scores: [] }; if(p.score) e.presenters[k].scores.push(+p.score); }); });
+  return Object.values(ev).filter(e => { const d = new Date(e.date); return d >= from && (!to || d < to); }).sort((a, b) => b.date.localeCompare(a.date));
+}
+const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
+
+function personStats(from, to){
+  const P = {};
+  const get = e => { e = lower(e); if(!e) return null; return P[e] = P[e] || { email: e, cases: 0, monthly: 0, pres: [], resolved: 0, answers: 0 }; };
+  D.cases.forEach(c => { const d = toDate(c.createdAt); if(!d || d < from || (to && d >= to)) return; const p = get(c.email); if(!p) return; p.cases++; p.monthly += monthlyMin(c); });
+  eventsIn(from, to).forEach(e => Object.values(e.presenters).forEach(pr => { const p = get(pr.email); if(p) p.pres.push(avg(pr.scores)); }));
+  D.threads.filter(t => (!t.kind || t.kind === 'question')).forEach(t => { const d = toDate(t.createdAt); if(!d || d < from) return;
+    (t.responders || []).forEach(r => { const p = get(r.email); if(!p) return; p.answers += r.count || 0; if(r.checked) p.resolved++; }); });
+  Object.values(P).forEach(p => {
+    const presAvg = avg(p.pres.filter(x => x != null));
+    p.presAvg = presAvg;
+    // 貢献スコア：削減1時間/月=1点、事例=3点、発表=5点（評価4以上なら+2）、Slack解決=3点
+    p.score = r1(p.monthly / 60 + p.cases * 3 + p.pres.length * 5 + (presAvg >= 4 ? 2 : 0) + p.resolved * 3);
+  });
+  return Object.values(P);
+}
+
+function render(){
+  const { from, prevFrom, label } = range();
+  $('periods').innerHTML = PERIODS.map(([k, l]) => `<button class="fchip${period === k ? ' on' : ''}" data-p="${k}" type="button">${l}</button>`).join(' ');
+  const activeEmp = Object.values(D.employees).filter(e => e.active !== false).length;
+
+  // --- AI活用 ---
+  const casesIn = D.cases.filter(c => { const d = toDate(c.createdAt); return d && d >= from; });
+  const casesPrev = prevFrom ? D.cases.filter(c => { const d = toDate(c.createdAt); return d && d >= prevFrom && d < from; }) : [];
+  const monthlyNow = D.cases.reduce((a, c) => a + monthlyMin(c), 0) / 60;
+  const monthlyAdded = casesIn.reduce((a, c) => a + monthlyMin(c), 0) / 60;
+  const rates = casesIn.filter(c => c.beforeMin > 0 && c.afterMin != null).map(c => saved(c) / c.beforeMin * 100);
+  const posters = new Set(casesIn.map(c => lower(c.email)));
+  const allPosters = new Set(D.cases.map(c => lower(c.email)));
+
+  // --- 勉強会 ---
+  const evs = eventsIn(from);
+  const attendees = new Set(evs.flatMap(e => [...e.present]));
+  const avgJoin = avg(evs.map(e => e.present.size));
+  const joinRates = evs.filter(e => e.absent.size).map(e => e.present.size / (e.present.size + e.absent.size) * 100);
+  const sat = avg(evs.flatMap(e => e.surveys.map(v => +v.satisfaction).filter(Boolean)));
+  const interval = evs.length > 1 ? Math.round((new Date(evs[0].date) - new Date(evs[evs.length - 1].date)) / 864e5 / (evs.length - 1)) : null;
+
+  // --- アカウント ---
+  const lic = D.licenses.filter(l => ['active','yellow'].includes(l.status));
+  const lastMonthKey = ym(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+  const usage = l => { const ad = l.activeDays || {}; const keys = Object.keys(ad).sort(); const k = keys[keys.length - 1]; return k ? { month: k, days: ad[k], rate: Math.min(100, Math.round(ad[k] / WORKDAYS * 100)) } : null; };
+  const usages = lic.map(usage).filter(Boolean);
+  const avgUsage = avg(usages.map(u => u.rate));
+  const seat = t => `${lic.filter(l => l.tool === t).length}/${D.seats[t] ?? '—'}`;
+
+  // --- アンバサダー・評価 ---
+  const ps = personStats(from);
+  const psMap = Object.fromEntries(ps.map(p => [p.email, p]));
+  const yellow = lic.filter(l => l.status === 'yellow').length;
+  const follow = [];
+  lic.forEach(l => {
+    const since = l.grantedAt ? Math.floor((Date.now() - new Date(l.grantedAt)) / 864e5) : null;
+    const allCases = D.cases.filter(c => lower(c.email) === l.email).length;
+    const u = usage(l);
+    if(l.status === 'yellow') follow.push({ l, why: '黄色信号（改善プラン提出中）' });
+    else if(since != null && since >= 90 && !allCases) follow.push({ l, why: `付与から${since}日・事例ゼロ` });
+    else if(u && u.rate < 30) follow.push({ l, why: `使用率 ${u.rate}%（${u.month}：${u.days}日）` });
+  });
+
+  const delta = (now, prev, unit) => prevFrom == null || prev == null ? '' : `<span class="delta ${now >= prev ? 'up' : 'down'}">（前の期間比 ${now >= prev ? '+' : ''}${r1(now - prev)}${unit}）</span>`;
+  $('updated').textContent = '表示：' + new Date().toLocaleString('ja-JP', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  $('summary').innerHTML = `${esc(label)}、AIの事例は <b>${casesIn.length}</b>件（${posters.size}名）投稿され、会社全体で <b>月${r1(monthlyNow)}</b>時間の削減効果になっています。
+    勉強会は <b>${evs.length}</b>回開催、平均 <b>${avgJoin != null ? r1(avgJoin) : '—'}</b>名が参加。
+    AIアカウントは <b>${lic.length}</b>名に付与し${avgUsage != null ? `、平均使用率は <b>${Math.round(avgUsage)}</b>%` : ''}${follow.length ? `、うち <b>${follow.length}</b>名はフォローが必要です` : 'です'}。`;
+  $('insight').innerHTML = D.insight ? `<span class="ai-tag blue">Claudeの週次所見 ${esc(toDate(D.insight.createdAt)?.toLocaleDateString('ja-JP') || '')}</span> ${esc(D.insight.summary || '')}` : '';
+
+  $('blocks').innerHTML = `
+    <div class="block"><div class="t">AI活用 <a href="#s-use">詳細 ↓</a></div><div class="big grad-t">${r1(monthlyNow)}<small>時間/月 削減</small></div>
+      <div class="rows"><span>期間内の事例 <b>${casesIn.length}</b>件 ${delta(casesIn.length, casesPrev.length, '件')}</span><span>平均削減率 <b>${rates.length ? Math.round(avg(rates)) : '—'}</b>%・期間内に追加 <b>${r1(monthlyAdded)}</b>h/月</span>
+      <span>投稿したことがある人 <b>${allPosters.size}</b>名${activeEmp ? ` / 在職 ${activeEmp}名（${Math.round(allPosters.size / activeEmp * 100)}%）` : ''}</span></div></div>
+    <div class="block"><div class="t">AI勉強会 <a href="#s-study">詳細 ↓</a></div><div class="big">${evs.length}<small>回開催</small></div>
+      <div class="rows"><span>平均参加 <b>${avgJoin != null ? r1(avgJoin) : '—'}</b>名・参加した人 <b>${attendees.size}</b>名</span><span>参加率 <b>${joinRates.length ? Math.round(avg(joinRates)) + '%' : '—'}</b>・満足度 <b>${sat != null ? r1(sat) : '—'}</b>/5</span>
+      <span>開催の間隔 <b>${interval != null ? '約' + interval + '日' : '—'}</b></span></div></div>
+    <div class="block"><div class="t">アカウント付与 <a href="#s-acc">詳細 ↓</a></div><div class="big">${lic.length}<small>名</small></div>
+      <div class="rows"><span>ChatGPT <b>${seat('chatgpt')}</b>枠・Claude <b>${seat('claude')}</b>枠</span><span>平均使用率 <b>${avgUsage != null ? Math.round(avgUsage) + '%' : '未入力'}</b></span></div></div>
+    <div class="block"><div class="t">アンバサダー <a href="#s-amb">詳細 ↓</a></div><div class="big">${lic.length}<small>名が活動中</small></div>
+      <div class="rows"><span>黄色信号 <b>${yellow}</b>名・要フォロー <b>${follow.length}</b>名</span><span>期間内の発表 <b>${ps.reduce((a, p) => a + p.pres.length, 0)}</b>回・Slack解決 <b>${ps.reduce((a, p) => a + p.resolved, 0)}</b>件</span></div></div>
+    <div class="block"><div class="t">人事評価 <a href="#s-eval">詳細 ↓</a></div><div class="big">${ps.filter(p => p.score >= 10).length}<small>名が評価対象</small></div>
+      <div class="rows"><span>貢献スコア10点以上の人数</span><span>トップ：<b>${esc(nameOf(ps.sort((a, b) => b.score - a.score)[0]?.email) || '—')}</b></span></div></div>`;
+
+  // 月別チャート（直近6か月）
+  const months = []; for(let i = 5; i >= 0; i--){ const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); months.push(ym(d)); }
+  const mData = months.map(m => { const cs = D.cases.filter(c => ym(toDate(c.createdAt)) === m); return { m, n: cs.length, h: cs.reduce((a, c) => a + monthlyMin(c), 0) / 60 }; });
+  const maxN = Math.max(1, ...mData.map(x => x.n)), maxH = Math.max(1, ...mData.map(x => x.h));
+  const W = 560, H = 200, bw = W / 6;
+  $('chart').innerHTML = `<svg viewBox="0 0 ${W} ${H + 40}" role="img" aria-label="月ごとの事例数と削減時間">
+    ${mData.map((x, i) => { const bh = x.n / maxN * (H - 30), hy = H - x.h / maxH * (H - 30);
+      return `<rect x="${i * bw + bw * .22}" y="${H - bh}" width="${bw * .56}" height="${bh}" rx="6" fill="rgba(139,124,255,.55)"/>
+        <text x="${i * bw + bw / 2}" y="${H - bh - 6}" text-anchor="middle" font-size="12" fill="#eceff8" font-weight="700">${x.n}件</text>
+        <circle cx="${i * bw + bw / 2}" cy="${hy}" r="4" fill="#46e3c8"/>
+        <text x="${i * bw + bw / 2}" y="${H + 18}" text-anchor="middle" font-size="12" fill="#98a0bc">${x.m.slice(5)}月</text>`; }).join('')}
+    <polyline points="${mData.map((x, i) => `${i * bw + bw / 2},${H - x.h / maxH * (H - 30)}`).join(' ')}" fill="none" stroke="#46e3c8" stroke-width="2"/>
+    <text x="0" y="${H + 36}" font-size="11" fill="#98a0bc">■ 事例数　● 追加された削減時間（h/月）：${mData.map(x => r1(x.h)).join(' / ')}</text></svg>`;
+
+  const byDept = {}; D.cases.forEach(c => { const k = deptOf(c.email) || c.dept || '不明'; byDept[k] = (byDept[k] || 0) + monthlyMin(c) / 60; });
+  const dRows = Object.entries(byDept).sort((a, b) => b[1] - a[1]).slice(0, 8); const dMax = Math.max(1, ...dRows.map(x => x[1]));
+  $('by-dept').innerHTML = dRows.map(([k, v]) => `<div style="display:grid;grid-template-columns:110px 1fr 70px;gap:10px;align-items:center;margin-bottom:8px;font-size:13px"><span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(k)}</span><div class="meter"><i style="width:${v / dMax * 100}%"></i></div><span class="num" style="text-align:right">${r1(v)}h</span></div>`).join('') || '<div class="ai-empty">データなし</div>';
+
+  const top = [...casesIn].sort((a, b) => monthlyMin(b) - monthlyMin(a) || saved(b) - saved(a)).slice(0, 8);
+  $('top-cases').innerHTML = `<thead><tr><th>事例</th><th>投稿者</th><th>削減</th><th>月間</th></tr></thead><tbody>${top.map(c => `<tr><td><div class="nm">${esc(c.title)}</div><div class="sub">${esc(c.task || c.scene || '')}・${esc(c.tool || '')}</div></td>
+    <td>${esc(nameOf(c.email) || c.name)}<div class="sub">${esc(deptOf(c.email) || c.dept || '')}</div></td>
+    <td class="num">${c.beforeMin > 0 && c.afterMin != null ? `${c.beforeMin}→${c.afterMin}分` : '—'}${c.beforeMin > 0 && c.afterMin != null ? `<div class="sub">${Math.round(saved(c) / c.beforeMin * 100)}%削減</div>` : ''}</td>
+    <td class="num">${monthlyMin(c) ? r1(monthlyMin(c) / 60) + 'h' : '—'}</td></tr>`).join('') || '<tr><td colspan="4"><div class="ai-empty">期間内の事例はありません</div></td></tr>'}</tbody>`;
+
+  $('events').innerHTML = `<thead><tr><th>開催日</th><th>参加</th><th>参加率</th><th>満足度</th><th>役立ち度</th><th>発表者（評価）</th><th>参加者</th></tr></thead><tbody>${evs.map(e => {
+    const s = avg(e.surveys.map(v => +v.satisfaction).filter(Boolean)), u = avg(e.surveys.map(v => +v.usefulness).filter(Boolean));
+    const rate = e.absent.size ? Math.round(e.present.size / (e.present.size + e.absent.size) * 100) + '%' : '—';
+    const names = [...e.present].map(x => nameOf(x) || x.split('@')[0]);
+    return `<tr><td class="num">${esc(e.date)}</td><td class="num">${e.present.size}名${e.absent.size ? `<div class="sub">欠席 ${e.absent.size}名</div>` : ''}</td><td class="num">${rate}</td>
+      <td class="num">${s != null ? r1(s) : '—'}</td><td class="num">${u != null ? r1(u) : '—'}</td>
+      <td>${Object.values(e.presenters).map(p => `<div>${esc(nameOf(p.email) || p.name)} <span class="num">${p.scores.length ? r1(avg(p.scores)) : '—'}</span><div class="sub">${esc(p.topic || '')}</div></div>`).join('') || '<span class="sub">—</span>'}</td>
+      <td><details><summary class="sub" style="cursor:pointer">${names.length}名を表示</summary><div class="sub" style="margin-top:4px">${names.map(esc).join('、')}</div></details></td></tr>`; }).join('') || '<tr><td colspan="7"><div class="ai-empty">期間内の勉強会の記録はありません</div></td></tr>'}</tbody>`;
+
+  $('accounts').innerHTML = `<thead><tr><th>利用者</th><th>ツール</th><th>付与日</th><th>使用率</th><th>事例（累計）</th><th>状態</th></tr></thead><tbody>${lic.sort((a, b) => (a.tool || '').localeCompare(b.tool || '')).map(l => { const u = usage(l); const n = D.cases.filter(c => lower(c.email) === l.email).length;
+    return `<tr><td><div class="nm">${esc(nameOf(l.email) || l.name || l.email)}</div><div class="sub">${esc(deptOf(l.email) || l.dept || '')}</div></td><td>${esc(TOOL[l.tool] || l.tool)}</td><td class="num">${esc(l.grantedAt || '—')}</td>
+      <td>${u ? `<span class="num">${u.rate}%</span><div class="meter"><i style="width:${u.rate}%"></i></div><div class="sub">${esc(u.month)}：${u.days}日</div>` : '<span class="sub">未入力</span>'}</td>
+      <td class="num">${n}</td><td><span class="ai-tag ${l.status === 'yellow' ? 'gold' : 'teal'}">${l.status === 'yellow' ? '黄色信号' : '利用中'}</span></td></tr>`; }).join('') || '<tr><td colspan="6"><div class="ai-empty">付与の記録はまだありません（運営コンソールのアンバサダー名簿で記録します）</div></td></tr>'}</tbody>`;
+
+  $('ambs').innerHTML = `<thead><tr><th>アンバサダー</th><th>事例</th><th>削減（月）</th><th>発表</th><th>Slack解決</th><th>貢献スコア</th></tr></thead><tbody>${lic.map(l => { const p = psMap[l.email] || { cases: 0, monthly: 0, pres: [], resolved: 0, score: 0 };
+    return { l, p }; }).sort((a, b) => b.p.score - a.p.score).map(({ l, p }) => `<tr><td><div class="nm">${esc(nameOf(l.email) || l.name || l.email)}</div><div class="sub">${esc(TOOL[l.tool] || '')}・任命 ${esc(l.grantedAt || '—')}</div></td>
+      <td class="num">${p.cases}</td><td class="num">${r1(p.monthly / 60)}h</td><td class="num">${p.pres.length}${p.presAvg ? `<div class="sub">評価 ${r1(p.presAvg)}</div>` : ''}</td><td class="num">${p.resolved}</td><td class="num">${p.score}</td></tr>`).join('') || '<tr><td colspan="6"><div class="ai-empty">アンバサダーはまだいません</div></td></tr>'}</tbody>`;
+
+  const ranked = [...ps].filter(p => p.score > 0).sort((a, b) => b.score - a.score).slice(0, 6);
+  const notes = Object.fromEntries((D.insight?.candidates || []).map(c => [lower(c.email), c]));
+  $('eval-top').innerHTML = ranked.map((p, i) => {
+    const why = [p.monthly ? `月${r1(p.monthly / 60)}時間の削減` : '', p.cases ? `事例${p.cases}件` : '', p.pres.length ? `発表${p.pres.length}回${p.presAvg ? `（評価${r1(p.presAvg)}）` : ''}` : '', p.resolved ? `Slackで${p.resolved}件解決` : ''].filter(Boolean).join('・');
+    return `<div class="rank"><span class="no">${i + 1}</span><div><span class="nm">${esc(nameOf(p.email) || p.email)}</span> <span class="sub" style="color:var(--muted);font-size:12px">${esc(deptOf(p.email))}</span> <span class="ai-tag" style="margin-left:4px">スコア ${p.score}</span>
+      <div class="why">${esc(why)}${notes[p.email] ? `<br>Claudeの所見：${esc(notes[p.email].reason)}` : ''}</div></div></div>`; }).join('') || '<div class="ai-empty">期間内の貢献データはまだありません</div>';
+  $('eval-follow').innerHTML = follow.map(f => `<div class="rank"><span class="no" style="background:var(--gold-soft);color:var(--gold)">!</span><div><span class="nm">${esc(nameOf(f.l.email) || f.l.name || f.l.email)}</span><div class="why">${esc(f.why)}</div></div></div>`).join('') || '<div class="ai-empty">フォローが必要な人はいません</div>';
+}
+$('periods').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if(b){ period = b.dataset.p; render(); } });
+
+async function load(){
+  const safe = p => p.catch(err => { console.warn(err); return null; });
+  const [emp, cs, att, sv, lic, th, ins] = await Promise.all([
+    safe(getDocs(collection(db, 'aiStudy_employees'))), safe(getDocs(collection(db, 'aiStudy_cases'))),
+    safe(getDocs(collection(db, 'aiStudy_attendance'))), safe(getDocs(collection(db, 'aiStudy_surveys'))),
+    getDocs(collection(db, 'aiStudy_licenses')), safe(getDocs(collection(db, 'aiStudy_slackThreads'))),
+    safe(getDocs(query(collection(db, 'aiStudy_insights'), orderBy('createdAt', 'desc'), limit(1)))),
+  ]);
+  D.employees = {}; emp?.forEach(d => D.employees[lower(d.id)] = d.data());
+  D.cases = []; cs?.forEach(d => { const x = d.data(); D.cases.push({ ...x, email: lower(x.email), beforeMin: Number(x.beforeMin) || 0, afterMin: x.afterMin != null ? Number(x.afterMin) : null, monthlyCount: Number(x.monthlyCount) || 0 }); });
+  D.attendance = []; att?.forEach(d => D.attendance.push(d.data()));
+  D.surveys = []; sv?.forEach(d => D.surveys.push(d.data()));
+  D.licenses = []; lic.forEach(d => { if(d.id === '__config'){ D.seats = { ...D.seats, ...(d.data().seats || {}) }; return; } D.licenses.push({ email: lower(d.id), ...d.data() }); });
+  D.threads = []; th?.forEach(d => D.threads.push(d.data()));
+  D.insight = null; ins?.forEach(d => D.insight = d.data());
+}
+
+const LOCAL = ['localhost','127.0.0.1'].includes(location.hostname) && new URLSearchParams(location.search).has('local');
+if(LOCAL){
+  const d = n => new Date(Date.now() - n * 864e5);
+  D.employees = { 'a1@x.jp':{ name:'見本 一郎', dept:'CX課', active:true }, 'a2@x.jp':{ name:'見本 二郎', dept:'営業', active:true }, 'a3@x.jp':{ name:'見本 三郎', dept:'IC課', active:true }, 'a4@x.jp':{ name:'見本 四郎', dept:'工務課', active:true } };
+  D.cases = [{ email:'a1@x.jp', title:'録音から議事録を作成', task:'議事録', tool:'ChatGPT', beforeMin:60, afterMin:10, monthlyCount:8, createdAt:d(10) }, { email:'a2@x.jp', title:'見積比較表', task:'見積', tool:'Claude', beforeMin:90, afterMin:20, monthlyCount:4, createdAt:d(40) }, { email:'a1@x.jp', title:'顧客メールの下書き', tool:'Gemini', beforeMin:20, afterMin:5, monthlyCount:20, createdAt:d(70) }];
+  D.attendance = [{ date:ym(d(30)) + '-12', email:'a4@x.jp', status:'absent' }];
+  D.surveys = [{ eventDate: ym(d(30)) + '-12', email:'a1@x.jp', satisfaction:5, usefulness:4, presenterReviews:[{ name:'見本 二郎', email:'a2@x.jp', topic:'Claudeで見積比較', score:5 }] }, { eventDate: ym(d(30)) + '-12', email:'a3@x.jp', satisfaction:4, usefulness:5, presenterReviews:[{ name:'見本 二郎', email:'a2@x.jp', topic:'Claudeで見積比較', score:4 }] }, { eventDate: ym(d(5)) + '-01', email:'a3@x.jp', satisfaction:4, usefulness:4 }];
+  D.licenses = [{ email:'a1@x.jp', tool:'chatgpt', status:'active', grantedAt: d(120).toISOString().slice(0,10), activeDays:{ [ym(d(0))]: 14 } }, { email:'a2@x.jp', tool:'claude', status:'active', grantedAt: d(60).toISOString().slice(0,10), activeDays:{ [ym(d(0))]: 4 } }, { email:'a4@x.jp', tool:'chatgpt', status:'yellow', grantedAt: d(200).toISOString().slice(0,10) }];
+  D.threads = [{ kind:'question', createdAt:d(3), responders:[{ email:'a1@x.jp', count:2, checked:true }] }];
+  D.insight = { createdAt:new Date(), summary:'（架空データ）勉強会後の質問が増えています。', candidates:[{ email:'a3@x.jp', reason:'毎回参加し、学びを具体的に書いている。' }] };
+  $('gate').classList.add('hidden'); $('app').classList.remove('hidden'); render();
+} else {
+  $('login').onclick = () => signInWithPopup(auth, new GoogleAuthProvider()).catch(err => {
+    if(err.code !== 'auth/popup-closed-by-user'){ $('gate-err').textContent = 'ログインに失敗しました：' + err.message; $('gate-err').classList.remove('hidden'); }
+  });
+  onAuthStateChanged(auth, async u => {
+    $('user-line').innerHTML = u ? `<span>${esc(u.email)}</span><button class="ai-btn sm" type="button" id="logout">ログアウト</button>` : '';
+    if(u) $('logout').onclick = () => signOut(auth);
+    if(!u){ $('gate').classList.remove('hidden'); $('app').classList.add('hidden'); return; }
+    try { await load(); }
+    catch(err){ $('gate-err').textContent = `${u.email} はこのページを見る権限がありません（社員マスタ・権限で「経営閲覧」か「運営」を設定してください）。`; $('gate-err').classList.remove('hidden'); return; }
+    $('gate').classList.add('hidden'); $('app').classList.remove('hidden'); render();
+  });
+}
+</script>
+</body>
+</html>

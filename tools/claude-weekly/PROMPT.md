@@ -6,6 +6,21 @@ GAS・スプレッドシート・Slackアプリは使わない。Slackは Slack 
 作業フォルダ：`/Users/tegawatakemi/Desktop/Claude_tegawa_development/ai-study-lp`
 一時ファイル：`/tmp/ai-study-weekly/`（終わったら削除する）
 
+## 0. 社員マスタを同期する（スプレッドシート → Firestore）
+- Google Drive コネクタの `get_file_metadata`（fileId: `1ESgN3xwtLZ2sIQ_XYKYIWW0AwRij4lZtc0rdebZODSs`、snippetVerbosity: `MAX_ALLOWED`）で
+  「基本社員データ（システム→スプシ）」の CSV（`社員ID,社員番号,氏名,入社日,退職日,所属部署,在職状態`）を取得し、
+  見出し行から最後までを `/tmp/ai-study-weekly/sheet.csv` に保存する。
+- Slack コネクタの `slack_search_users` で社内ドメイン（`ych-exceed.com` `besto-haus.com` `exceed-group.co.jp`）を
+  キーワード検索し（ページ送りして全員）、`{ "slackUsers": [ { "name": "表示名", "email": "メール" } ] }` を
+  `/tmp/ai-study-weekly/emails.json` に保存する。
+- まず `--dry-run` で確認してから本実行する：
+```bash
+node tools/claude-weekly/sync-employees.cjs /tmp/ai-study-weekly/sheet.csv /tmp/ai-study-weekly/emails.json --dry-run
+node tools/claude-weekly/sync-employees.cjs /tmp/ai-study-weekly/sheet.csv /tmp/ai-study-weekly/emails.json
+```
+- 権限（運営・管理・アンバサダー）は変更しない。新しく入った人は自動的に「一般」になる。
+- `unlinked`（メール未紐付けの在職者）は件数だけ報告する（社員マスタ・権限ページで管理者が紐付ける）。
+
 ## 1. Slack #ask-ai勉強会 を読む（channel_id: C0BU68QP8M6）
 - `slack_read_channel` で直近60日分（oldest = 今から60日前のUNIX秒）を読む。返信のある投稿は `slack_read_thread` で全文を読む。✅の確認が必要なら `slack_get_reactions` を使う。
 - 「〇〇さんがチャンネルに参加しました」・Slackbot・Bot の投稿は除外する。
@@ -64,4 +79,4 @@ rm -rf /tmp/ai-study-weekly
 途中で止まった場合も、`aiStudy_slackSync/status` に `ok: false` と `error`（原因を短く）を書き込んで終える。コンソールに「解析でエラー」と表示される。
 
 ## 6. 最後に
-実行結果を3行で報告する（質問数・未回答数・新しい候補者の数）。個人の評価の詳細はチャットに書かない（コンソールで見る）。
+実行結果を4行で報告する（社員マスタの同期件数と未紐付け数・質問数・未回答数・新しい候補者の数）。個人の評価の詳細はチャットに書かない（コンソールで見る）。

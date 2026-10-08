@@ -98,6 +98,7 @@ img { max-width: 100%; }
 .ai-subnav a:hover { color: var(--text); }
 .ai-subnav a.on { color: var(--text); background: var(--violet-soft); }
 @media (max-width: 720px) {
+  .ai-header { position: relative; }
   .ai-header .ai-wrap { flex-wrap: wrap; gap: 6px; padding-top: 10px; padding-bottom: 6px; }
   .ai-brand small { display: none; }
   .ai-nav { margin-left: 0; width: 100%; padding-bottom: 2px; }
